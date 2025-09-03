@@ -61,8 +61,6 @@
                     Masuk
                 </button>
             </form>
-            
-
         </div>
     </div>
 
@@ -197,18 +195,30 @@
                         <span class="bg-purple-100 text-purple-600 p-2 rounded-lg mr-3">📊</span>
                         Data Surat
                     </h2>
-                    <div class="flex space-x-2">
-                        <button onclick="testConnection()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="loadFromLocalStorage()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            📱 Data Lokal
+                        </button>
+                        <button onclick="testConnection()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             Test Koneksi
                         </button>
-                        <button onclick="loadData()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                        <button onclick="loadData()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
-                            Refresh Data
+                            🔄 Sinkronisasi
+                        </button>
+                        <button onclick="clearLocalStorage()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            🗑️ Hapus Lokal
                         </button>
                     </div>
                 </div>
@@ -259,6 +269,11 @@
                     <div id="filterStatus" class="mt-2 text-sm text-blue-600 hidden">
                         <span class="font-medium">Status Filter:</span> <span id="filterStatusText">Menampilkan semua data</span>
                     </div>
+                    <div id="localStorageStatus" class="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <div class="text-sm text-purple-600">
+                            📱 Data Lokal: Memuat...
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Data Surat Masuk -->
@@ -297,7 +312,7 @@
                             <tbody id="data-table-masuk">
                                 <tr>
                                     <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                        Klik "Refresh Data" untuk memuat data surat masuk
+                                        Klik "📱 Data Lokal" untuk memuat data surat masuk
                                     </td>
                                 </tr>
                             </tbody>
@@ -341,7 +356,7 @@
                             <tbody id="data-table-keluar">
                                 <tr>
                                     <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                        Klik "Refresh Data" untuk memuat data surat keluar
+                                        Klik "📱 Data Lokal" untuk memuat data surat keluar
                                     </td>
                                 </tr>
                             </tbody>
@@ -450,6 +465,150 @@
         const VALID_USERNAME = 'FAUZI';
         const VALID_PASSWORD = '12345';
         
+        // Global variables for data and filtering
+        let allData = [];
+        let filteredData = [];
+        let currentFilter = 'all';
+        
+        // Local Storage Keys
+        const STORAGE_KEYS = {
+            SURAT_MASUK: 'sdn22_surat_masuk',
+            SURAT_KELUAR: 'sdn22_surat_keluar',
+            LAST_SYNC: 'sdn22_last_sync'
+        };
+        
+        // Local Storage Functions
+        function saveToLocalStorage(data, type) {
+            try {
+                const key = type === 'masuk' ? STORAGE_KEYS.SURAT_MASUK : STORAGE_KEYS.SURAT_KELUAR;
+                let existingData = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                // Add new data with unique ID
+                const newData = {
+                    ...data,
+                    id: Date.now() + Math.random(),
+                    timestamp: new Date().toISOString(),
+                    type: type
+                };
+                
+                existingData.push(newData);
+                localStorage.setItem(key, JSON.stringify(existingData));
+                
+                console.log(`Data surat ${type} disimpan ke localStorage:`, newData);
+                return true;
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+                return false;
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            try {
+                const masukData = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_MASUK) || '[]');
+                const keluarData = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR) || '[]');
+                
+                // Combine and format data
+                allData = [...masukData, ...keluarData];
+                filteredData = [...allData];
+                
+                console.log('Data dimuat dari localStorage:', allData.length, 'items');
+                
+                displayData(filteredData);
+                updateStats(filteredData);
+                updateLocalStorageStatus();
+                
+                if (allData.length > 0) {
+                    showMessage(`${allData.length} data berhasil dimuat dari penyimpanan lokal`, 'success');
+                } else {
+                    showMessage('Belum ada data tersimpan di penyimpanan lokal', 'info');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+                return false;
+            }
+        }
+        
+        function updateLocalStorageStatus() {
+            const masukCount = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_MASUK) || '[]').length;
+            const keluarCount = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR) || '[]').length;
+            const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+            
+            // Update status display if elements exist
+            const statusElement = document.getElementById('localStorageStatus');
+            if (statusElement) {
+                statusElement.innerHTML = `
+                    <div class="text-sm text-purple-600">
+                        📱 Data Lokal: ${masukCount} surat masuk, ${keluarCount} surat keluar
+                        ${lastSync ? `<br>🔄 Sinkronisasi terakhir: ${new Date(lastSync).toLocaleString('id-ID')}` : ''}
+                    </div>
+                `;
+            }
+        }
+        
+        function clearLocalStorage() {
+            if (confirm('Apakah Anda yakin ingin menghapus semua data lokal? Data ini tidak dapat dikembalikan!')) {
+                localStorage.removeItem(STORAGE_KEYS.SURAT_MASUK);
+                localStorage.removeItem(STORAGE_KEYS.SURAT_KELUAR);
+                localStorage.removeItem(STORAGE_KEYS.LAST_SYNC);
+                
+                allData = [];
+                filteredData = [];
+                displayData(filteredData);
+                updateStats(filteredData);
+                updateLocalStorageStatus();
+                
+                showMessage('Semua data lokal berhasil dihapus', 'success');
+            }
+        }
+        
+        function deleteFromLocalStorage(id, type) {
+            try {
+                const key = type === 'masuk' ? STORAGE_KEYS.SURAT_MASUK : STORAGE_KEYS.SURAT_KELUAR;
+                let data = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                // Find and remove by row number (id is the display row number)
+                if (id > 0 && id <= data.length) {
+                    data.splice(id - 1, 1); // Remove item at index (id-1)
+                    localStorage.setItem(key, JSON.stringify(data));
+                    
+                    // Reload data to reflect changes
+                    loadFromLocalStorage();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error deleting from localStorage:', error);
+                return false;
+            }
+        }
+        
+        function updateLocalStorage(id, type, newData) {
+            try {
+                const key = type === 'masuk' ? STORAGE_KEYS.SURAT_MASUK : STORAGE_KEYS.SURAT_KELUAR;
+                let data = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                // Find and update by row number
+                if (id > 0 && id <= data.length) {
+                    data[id - 1] = {
+                        ...data[id - 1],
+                        ...newData,
+                        timestamp: new Date().toISOString()
+                    };
+                    localStorage.setItem(key, JSON.stringify(data));
+                    
+                    // Reload data to reflect changes
+                    loadFromLocalStorage();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error updating localStorage:', error);
+                return false;
+            }
+        }
+        
         // Check if user is already logged in
         function checkLogin() {
             const isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -478,6 +637,11 @@
                 month: 'long',
                 day: 'numeric'
             });
+            
+            // Load data from localStorage automatically
+            setTimeout(() => {
+                loadFromLocalStorage();
+            }, 500);
         }
         
         // Toggle password visibility
@@ -525,11 +689,12 @@
         // Logout function
         function logout() {
             if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
-                // Clear localStorage
-                localStorage.clear();
+                // Clear login status only, keep data
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
                 
                 // Show logout message
-                showMessage('Logout berhasil! Terima kasih telah menggunakan sistem.', 'success');
+                showMessage('Logout berhasil! Data lokal tetap tersimpan.', 'success');
                 
                 // Force page reload to reset everything
                 setTimeout(() => {
@@ -544,11 +709,6 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             login(username, password);
-        });
-        
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', () => {
-            checkLogin();
         });
         
         // Test koneksi ke Google Apps Script
@@ -566,8 +726,6 @@
                 return false;
             }
         }
-
-
 
         // Set default dates to today
         const today = new Date().toISOString().split('T')[0];
@@ -604,7 +762,9 @@
             const message = document.getElementById('message');
             message.textContent = text;
             message.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'info' ? 'bg-blue-500 text-white' :
+                'bg-red-500 text-white'
             }`;
             message.classList.remove('hidden');
             
@@ -618,57 +778,19 @@
             const loadingElement = document.getElementById(`loading-${type}`);
             loadingElement.classList.remove('hidden');
             
-            try {
-                console.log(`Mengirim data surat ${type} ke Google Sheets...`);
-                
-                // Prepare data with proper structure
-                const submitData = new URLSearchParams();
-                submitData.append('action', 'saveData');
-                submitData.append('type', type);
-                submitData.append('separateSheets', 'true'); // Flag untuk sheet terpisah
-                
-                // Add form fields
-                for (let [key, value] of formData.entries()) {
-                    if (key !== 'type') { // Don't duplicate type
-                        submitData.append(key, value || '');
-                    }
+            // Convert FormData to object for localStorage
+            const dataObject = {};
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'type') {
+                    dataObject[key] = value || '';
                 }
-                
-                // Add current timestamp
-                submitData.append('timestamp', new Date().toLocaleString('id-ID'));
-                
-                console.log('Data yang akan dikirim:');
-                for (let [key, value] of submitData.entries()) {
-                    console.log(`${key}: ${value}`);
-                }
-                
-                // Send data using POST method
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: submitData
-                });
-                
-                // Check if request was successful
-                let responseText = '';
-                try {
-                    responseText = await response.text();
-                    console.log('Response dari server:', responseText);
-                    
-                    // Check response messages
-                    if (responseText.includes('Sheet baru dibuat')) {
-                        showMessage(`Sheet "${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}" berhasil dibuat! Data disimpan.`, 'success');
-                    } else if (responseText.includes('berhasil disimpan')) {
-                        showMessage(`Surat ${type} berhasil disimpan ke sheet "${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}"!`, 'success');
-                    } else {
-                        showMessage(`Surat ${type} berhasil disimpan!`, 'success');
-                    }
-                } catch (e) {
-                    console.log('Tidak bisa membaca response, tapi request terkirim');
-                    showMessage(`Surat ${type} berhasil disimpan ke sheet terpisah!`, 'success');
-                }
+            }
+            
+            // Save to localStorage first (always works)
+            const localSaved = saveToLocalStorage(dataObject, type);
+            if (localSaved) {
+                // Reload display to show new data
+                loadFromLocalStorage();
                 
                 document.getElementById(`form-${type}`).reset();
                 
@@ -680,47 +802,47 @@
                     document.querySelector('#form-keluar input[name="tanggal_kirim"]').value = today;
                 }
                 
-            } catch (error) {
-                console.error('Error:', error);
+                showMessage(`Surat ${type} berhasil disimpan ke penyimpanan lokal!`, 'success');
+            }
+            
+            // Try to sync with Google Sheets (optional)
+            try {
+                console.log(`Mencoba sinkronisasi surat ${type} ke Google Sheets...`);
                 
-                // Try fallback method with no-cors
-                try {
-                    console.log('Mencoba metode fallback...');
-                    
-                    const fallbackData = new URLSearchParams();
-                    fallbackData.append('action', 'saveData');
-                    fallbackData.append('type', type);
-                    fallbackData.append('separateSheets', 'true');
-                    
-                    for (let [key, value] of formData.entries()) {
-                        if (key !== 'type') {
-                            fallbackData.append(key, value || '');
-                        }
+                // Prepare data with proper structure
+                const submitData = new URLSearchParams();
+                submitData.append('action', 'saveData');
+                submitData.append('type', type);
+                submitData.append('separateSheets', 'true');
+                
+                // Add form fields
+                for (let [key, value] of formData.entries()) {
+                    if (key !== 'type') {
+                        submitData.append(key, value || '');
                     }
-                    
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: fallbackData
-                    });
-                    
-                    showMessage(`Surat ${type} berhasil disimpan ke sheet terpisah!`, 'success');
-                    document.getElementById(`form-${type}`).reset();
-                    
-                    const today = new Date().toISOString().split('T')[0];
-                    if (type === 'masuk') {
-                        document.querySelector('#form-masuk input[name="tanggal_diterima"]').value = today;
-                    } else {
-                        document.querySelector('#form-keluar input[name="tanggal_kirim"]').value = today;
-                    }
-                    
-                } catch (fallbackError) {
-                    console.error('Fallback error:', fallbackError);
-                    showMessage(`Gagal menyimpan surat ${type}. Periksa koneksi internet dan pastikan Google Apps Script sudah di-deploy dengan benar.`, 'error');
                 }
+                
+                // Add current timestamp
+                submitData.append('timestamp', new Date().toLocaleString('id-ID'));
+                
+                // Send data using POST method
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: submitData
+                });
+                
+                // Update last sync time
+                localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+                updateLocalStorageStatus();
+                
+                console.log('Sinkronisasi dengan Google Sheets berhasil');
+                
+            } catch (error) {
+                console.log('Sinkronisasi dengan Google Sheets gagal, data tetap tersimpan lokal:', error);
+                // Don't show error message since local save succeeded
             } finally {
                 loadingElement.classList.add('hidden');
             }
@@ -741,11 +863,6 @@
             await submitForm(formData, 'keluar');
         });
 
-        // Global variables for data and filtering
-        let allData = [];
-        let filteredData = [];
-        let currentFilter = 'all';
-
         // Load data
         async function loadData() {
             try {
@@ -763,7 +880,8 @@
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
-                showMessage('Gagal memuat data. Silakan coba lagi.', 'error');
+                showMessage('Gagal memuat data dari Google Sheets. Menggunakan data lokal.', 'error');
+                loadFromLocalStorage();
             }
         }
 
@@ -1004,7 +1122,7 @@
 
         // Download PDF function
         function downloadPDF(type) {
-            const { jsPDF } = window.jspdf;
+            const { jsPDF } = window.jsPdf;
             const doc = new jsPDF({
                 orientation: 'landscape',
                 unit: 'mm',
@@ -1192,8 +1310,6 @@
                 doc.setFont('helvetica', 'bold');
                 doc.text(`Total ${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}: ${rowCount} surat`, tableStartX, currentY);
                 
-                // Signature section removed
-                
                 // Footer with copyright
                 const pageCount = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
@@ -1273,178 +1389,37 @@
         // Delete function
         async function deleteData(id, type) {
             if (confirm(`Apakah Anda yakin ingin menghapus surat ${type} nomor ${id} ini?`)) {
+                // Delete from localStorage first
+                const localDeleted = deleteFromLocalStorage(id, type);
+                
+                if (localDeleted) {
+                    showMessage(`Surat ${type} nomor ${id} berhasil dihapus dari penyimpanan lokal!`, 'success');
+                    updateLocalStorageStatus();
+                } else {
+                    showMessage(`Gagal menghapus surat ${type} dari penyimpanan lokal.`, 'error');
+                }
+                
+                // Try to delete from Google Sheets (optional)
                 try {
-                    // Show loading state
-                    showMessage(`Menghapus surat ${type} nomor ${id}...`, 'success');
-                    
-                    // Prepare delete request with proper data structure
                     const deleteParams = new URLSearchParams();
                     deleteParams.append('action', 'deleteData');
                     deleteParams.append('type', type);
                     deleteParams.append('rowNumber', id);
                     deleteParams.append('sheetName', type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar');
                     
-                    console.log('Sending delete request:', deleteParams.toString());
-                    
-                    // Send delete request to Google Apps Script
-                    const response = await fetch(SCRIPT_URL, {
+                    await fetch(SCRIPT_URL, {
                         method: 'POST',
+                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: deleteParams,
-                        mode: 'cors'
+                        body: deleteParams
                     });
                     
-                    // Handle response
-                    let success = false;
-                    try {
-                        const responseText = await response.text();
-                        console.log('Delete response:', responseText);
-                        success = responseText.includes('berhasil') || responseText.includes('success') || response.ok;
-                    } catch (e) {
-                        // If we can't read response but request went through, assume success
-                        success = response.ok;
-                    }
-                    
-                    if (success || response.ok) {
-                        // Remove row from table immediately
-                        const tableBody = type === 'masuk' ? 
-                            document.getElementById('data-table-masuk') : 
-                            document.getElementById('data-table-keluar');
-                        
-                        const rows = Array.from(tableBody.querySelectorAll('tr'));
-                        let targetRow = null;
-                        
-                        // Find and remove the target row
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
-                                targetRow = row;
-                                row.remove();
-                                break;
-                            }
-                        }
-                        
-                        // Update row numbers for remaining rows
-                        const remainingRows = Array.from(tableBody.querySelectorAll('tr'));
-                        remainingRows.forEach((row, index) => {
-                            if (row.cells.length > 1) {
-                                // Update row number
-                                row.cells[0].textContent = index + 1;
-                                
-                                // Update button onclick handlers
-                                const editBtn = row.querySelector('button[onclick*="editData"]');
-                                const deleteBtn = row.querySelector('button[onclick*="deleteData"]');
-                                
-                                if (editBtn) {
-                                    editBtn.setAttribute('onclick', `editData(${index + 1}, '${type}')`);
-                                }
-                                if (deleteBtn) {
-                                    deleteBtn.setAttribute('onclick', `deleteData(${index + 1}, '${type}')`);
-                                }
-                            }
-                        });
-                        
-                        // Update statistics
-                        const totalElement = document.getElementById(`total-${type}`);
-                        if (totalElement) {
-                            const currentTotal = parseInt(totalElement.textContent) || 0;
-                            const newTotal = Math.max(0, currentTotal - 1);
-                            totalElement.textContent = newTotal;
-                        }
-                        
-                        // Show placeholder if no data left
-                        if (remainingRows.length === 0 || remainingRows.every(row => row.cells.length <= 1)) {
-                            tableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                        Belum ada data surat ${type}
-                                    </td>
-                                </tr>
-                            `;
-                            if (totalElement) totalElement.textContent = '0';
-                        }
-                        
-                        showMessage(`Surat ${type} nomor ${id} berhasil dihapus dari Google Sheets!`, 'success');
-                        
-                    } else {
-                        throw new Error('Delete request failed');
-                    }
+                    console.log('Data juga dihapus dari Google Sheets');
                     
                 } catch (error) {
-                    console.error('Primary delete method failed:', error);
-                    
-                    // Fallback method with no-cors
-                    try {
-                        const fallbackParams = new URLSearchParams();
-                        fallbackParams.append('action', 'deleteData');
-                        fallbackParams.append('type', type);
-                        fallbackParams.append('rowNumber', id);
-                        fallbackParams.append('sheetName', type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar');
-                        
-                        await fetch(SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: fallbackParams
-                        });
-                        
-                        // Since no-cors doesn't return response, assume success and update UI
-                        const tableBody = type === 'masuk' ? 
-                            document.getElementById('data-table-masuk') : 
-                            document.getElementById('data-table-keluar');
-                        
-                        const rows = Array.from(tableBody.querySelectorAll('tr'));
-                        
-                        // Remove the target row
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
-                                row.remove();
-                                break;
-                            }
-                        }
-                        
-                        // Update remaining rows
-                        const remainingRows = Array.from(tableBody.querySelectorAll('tr'));
-                        remainingRows.forEach((row, index) => {
-                            if (row.cells.length > 1) {
-                                row.cells[0].textContent = index + 1;
-                                const editBtn = row.querySelector('button[onclick*="editData"]');
-                                const deleteBtn = row.querySelector('button[onclick*="deleteData"]');
-                                if (editBtn) editBtn.setAttribute('onclick', `editData(${index + 1}, '${type}')`);
-                                if (deleteBtn) deleteBtn.setAttribute('onclick', `deleteData(${index + 1}, '${type}')`);
-                            }
-                        });
-                        
-                        // Update statistics
-                        const totalElement = document.getElementById(`total-${type}`);
-                        if (totalElement) {
-                            const currentTotal = parseInt(totalElement.textContent) || 0;
-                            totalElement.textContent = Math.max(0, currentTotal - 1);
-                        }
-                        
-                        // Show placeholder if needed
-                        if (remainingRows.length === 0 || remainingRows.every(row => row.cells.length <= 1)) {
-                            tableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                        Belum ada data surat ${type}
-                                    </td>
-                                </tr>
-                            `;
-                            if (totalElement) totalElement.textContent = '0';
-                        }
-                        
-                        showMessage(`Surat ${type} nomor ${id} berhasil dihapus! (Fallback method)`, 'success');
-                        
-                    } catch (fallbackError) {
-                        console.error('Fallback delete also failed:', fallbackError);
-                        showMessage(`Gagal menghapus surat ${type}. Periksa koneksi internet dan coba lagi.`, 'error');
-                    }
+                    console.log('Gagal menghapus dari Google Sheets, tapi data lokal sudah dihapus:', error);
                 }
             }
         }
@@ -1461,87 +1436,41 @@
                 const id = formData.get('id');
                 const type = formData.get('type');
                 
-                console.log(`Mengupdate data surat ${type} dengan ID ${id}...`);
-                
-                // Prepare update request
-                const updateData = new URLSearchParams();
-                updateData.append('action', 'updateData');
-                updateData.append('type', type);
-                updateData.append('id', id);
-                updateData.append('separateSheets', 'true');
-                updateData.append('nomor_surat', formData.get('nomor_surat') || '');
-                updateData.append('tanggal_surat', formData.get('tanggal_surat') || '');
-                updateData.append('perihal', formData.get('perihal') || '');
+                // Prepare update data
+                const updateData = {};
+                updateData.nomor_surat = formData.get('nomor_surat') || '';
+                updateData.tanggal_surat = formData.get('tanggal_surat') || '';
+                updateData.perihal = formData.get('perihal') || '';
                 
                 if (type === 'masuk') {
-                    updateData.append('pengirim', formData.get('pengirim_tujuan') || '');
-                    updateData.append('tanggal_diterima', formData.get('tanggal_aksi') || '');
+                    updateData.pengirim = formData.get('pengirim_tujuan') || '';
+                    updateData.tanggal_diterima = formData.get('tanggal_aksi') || '';
                 } else {
-                    updateData.append('tujuan', formData.get('pengirim_tujuan') || '');
-                    updateData.append('tanggal_kirim', formData.get('tanggal_aksi') || '');
+                    updateData.tujuan = formData.get('pengirim_tujuan') || '';
+                    updateData.tanggal_kirim = formData.get('tanggal_aksi') || '';
                 }
                 
-                // Send update request
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: updateData
-                });
+                // Update localStorage first
+                const localUpdated = updateLocalStorage(id, type, updateData);
                 
-                let responseText = '';
+                if (localUpdated) {
+                    showMessage(`Data surat ${type} berhasil diperbarui di penyimpanan lokal!`, 'success');
+                    closeEditModal();
+                    updateLocalStorageStatus();
+                } else {
+                    showMessage('Gagal memperbarui data di penyimpanan lokal.', 'error');
+                }
+                
+                // Try to update Google Sheets (optional)
                 try {
-                    responseText = await response.text();
-                    console.log('Update response:', responseText);
-                } catch (e) {
-                    console.log('Update request sent successfully');
-                }
-                
-                showMessage(`Data surat ${type} berhasil diperbarui!`, 'success');
-                closeEditModal();
-                
-                // Update the row in display immediately
-                const tableBody = type === 'masuk' ? 
-                    document.getElementById('data-table-masuk') : 
-                    document.getElementById('data-table-keluar');
-                
-                const rows = tableBody.querySelectorAll('tr');
-                for (let row of rows) {
-                    if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
-                        row.cells[1].textContent = formData.get('nomor_surat') || '-';
-                        row.cells[2].textContent = formData.get('tanggal_surat') || '-';
-                        row.cells[3].textContent = formData.get('pengirim_tujuan') || '-';
-                        row.cells[4].textContent = formData.get('perihal') || '-';
-                        row.cells[5].textContent = formData.get('tanggal_aksi') || '-';
-                        break;
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error updating data:', error);
-                
-                // Try fallback method
-                try {
-                    const formData = new FormData(e.target);
-                    const id = formData.get('id');
-                    const type = formData.get('type');
+                    const sheetsData = new URLSearchParams();
+                    sheetsData.append('action', 'updateData');
+                    sheetsData.append('type', type);
+                    sheetsData.append('id', id);
+                    sheetsData.append('separateSheets', 'true');
                     
-                    const fallbackData = new URLSearchParams();
-                    fallbackData.append('action', 'updateData');
-                    fallbackData.append('type', type);
-                    fallbackData.append('id', id);
-                    fallbackData.append('separateSheets', 'true');
-                    fallbackData.append('nomor_surat', formData.get('nomor_surat') || '');
-                    fallbackData.append('tanggal_surat', formData.get('tanggal_surat') || '');
-                    fallbackData.append('perihal', formData.get('perihal') || '');
-                    
-                    if (type === 'masuk') {
-                        fallbackData.append('pengirim', formData.get('pengirim_tujuan') || '');
-                        fallbackData.append('tanggal_diterima', formData.get('tanggal_aksi') || '');
-                    } else {
-                        fallbackData.append('tujuan', formData.get('pengirim_tujuan') || '');
-                        fallbackData.append('tanggal_kirim', formData.get('tanggal_aksi') || '');
+                    for (let [key, value] of Object.entries(updateData)) {
+                        sheetsData.append(key, value);
                     }
                     
                     await fetch(SCRIPT_URL, {
@@ -1550,27 +1479,27 @@
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: fallbackData
+                        body: sheetsData
                     });
                     
-                    showMessage(`Data surat ${type} berhasil diperbarui!`, 'success');
-                    closeEditModal();
+                    console.log('Data juga diperbarui di Google Sheets');
                     
-                    // Reload data to reflect changes
-                    setTimeout(() => {
-                        loadData();
-                    }, 1000);
-                    
-                } catch (fallbackError) {
-                    console.error('Fallback update error:', fallbackError);
-                    showMessage('Gagal memperbarui data. Silakan coba lagi.', 'error');
+                } catch (error) {
+                    console.log('Gagal memperbarui Google Sheets, tapi data lokal sudah diperbarui:', error);
                 }
+                
+            } catch (error) {
+                console.error('Error updating data:', error);
+                showMessage('Gagal memperbarui data. Silakan coba lagi.', 'error');
             } finally {
                 loadingElement.classList.add('hidden');
             }
         });
 
-
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLogin();
+        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9793ed71e5d3f8de',t:'MTc1Njg4ODY3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979542e3037e5fd9',t:'MTc1NjkwMjY1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
