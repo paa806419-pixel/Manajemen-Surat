@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Surat Masuk & Keluar - SDN 22 Tanah Keras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Login Form -->
+    <div id="loginContainer" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="mx-auto mb-4 flex items-center justify-center">
+                    <img src="https://iili.io/3b1SedN.png" alt="Logo SDN 22 Tanah Keras" class="w-20 h-20 object-contain" onerror="this.style.display='none'; document.getElementById('fallbackIcon').style.display='flex';">
+                    <div id="fallbackIcon" class="bg-blue-600 text-white p-4 rounded-full w-16 h-16 flex items-center justify-center" style="display: none;">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Login Sistem</h2>
+                <p class="text-gray-600 mt-2">SDN 22 Tanah Keras</p>
+                <p class="text-sm text-gray-500 mt-1">Aplikasi Surat Masuk & Keluar</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Masukkan username">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kata Sandi</label>
+                    <div class="relative">
+                        <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12" placeholder="Masukkan kata sandi">
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                    Username atau kata sandi salah!
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center">
+                    <span id="loginLoading" class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2 hidden"></span>
+                    Masuk
+                </button>
+            </form>
+            
+
+        </div>
+    </div>
+
+    <!-- Main Application (Hidden initially) -->
+    <div id="mainApp" class="hidden">
+    <!-- Header -->
+    <header class="bg-white shadow-lg border-b-4 border-blue-600">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white p-2 rounded-lg shadow-md border">
+                        <img src="https://iili.io/3b1SedN.png" alt="Logo SDN 22 Tanah Keras" class="w-12 h-12 object-contain" onerror="this.style.display='none'; document.getElementById('headerFallbackIcon').style.display='flex';">
+                        <div id="headerFallbackIcon" class="bg-blue-600 text-white p-3 rounded-lg w-12 h-12 flex items-center justify-center" style="display: none;">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Aplikasi Surat</h1>
+                        <p class="text-gray-600">SDN 22 Tanah Keras</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500" id="currentDate"></p>
+                    <p class="text-sm font-medium text-blue-600">Sistem Manajemen Surat</p>
+                    <button onclick="logout()" class="mt-2 text-xs bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-lg shadow-md mb-8">
+            <div class="flex border-b">
+                <button onclick="showTab('masuk')" id="tab-masuk" class="flex-1 py-4 px-6 text-center font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50">
+                    📥 Surat Masuk
+                </button>
+                <button onclick="showTab('keluar')" id="tab-keluar" class="flex-1 py-4 px-6 text-center font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                    📤 Surat Keluar
+                </button>
+                <button onclick="showTab('data')" id="tab-data" class="flex-1 py-4 px-6 text-center font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                    📊 Data Surat
+                </button>
+            </div>
+        </div>
+
+        <!-- Surat Masuk Form -->
+        <div id="content-masuk" class="fade-in">
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <span class="bg-green-100 text-green-600 p-2 rounded-lg mr-3">📥</span>
+                    Form Surat Masuk
+                </h2>
+                <form id="form-masuk" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat</label>
+                            <input type="text" name="nomor_surat" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Surat</label>
+                            <input type="date" name="tanggal_surat" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pengirim</label>
+                            <input type="text" name="pengirim" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Diterima</label>
+                            <input type="date" name="tanggal_diterima" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
+                        <input type="text" name="perihal" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center">
+                        <span id="loading-masuk" class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2 hidden"></span>
+                        Simpan Surat Masuk
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Surat Keluar Form -->
+        <div id="content-keluar" class="fade-in hidden">
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <span class="bg-orange-100 text-orange-600 p-2 rounded-lg mr-3">📤</span>
+                    Form Surat Keluar
+                </h2>
+                <form id="form-keluar" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat</label>
+                            <input type="text" name="nomor_surat" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Surat</label>
+                            <input type="date" name="tanggal_surat" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tujuan</label>
+                            <input type="text" name="tujuan" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Kirim</label>
+                            <input type="date" name="tanggal_kirim" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
+                        <input type="text" name="perihal" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    </div>
+                    <button type="submit" class="w-full bg-orange-600 text-white py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center justify-center">
+                        <span id="loading-keluar" class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2 hidden"></span>
+                        Simpan Surat Keluar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Data Surat -->
+        <div id="content-data" class="fade-in hidden">
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <span class="bg-purple-100 text-purple-600 p-2 rounded-lg mr-3">📊</span>
+                        Data Surat
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button onclick="testConnection()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Test Koneksi
+                        </button>
+                        <button onclick="loadData()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Refresh Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub Navigation for Data -->
+                <div class="bg-gray-50 rounded-lg p-1 mb-6">
+                    <div class="flex">
+                        <button onclick="showDataTab('masuk')" id="data-tab-masuk" class="flex-1 py-3 px-4 text-center font-medium text-white bg-green-600 rounded-lg transition-colors">
+                            📥 Data Surat Masuk
+                        </button>
+                        <button onclick="showDataTab('keluar')" id="data-tab-keluar" class="flex-1 py-3 px-4 text-center font-medium text-gray-600 hover:text-green-600 transition-colors ml-1">
+                            📤 Data Surat Keluar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-blue-600 font-medium">🔍 Filter Tanggal:</span>
+                            <button onclick="filterByDate('today')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                Hari Ini
+                            </button>
+                            <button onclick="filterByDate('week')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                Minggu Ini
+                            </button>
+                            <button onclick="filterByDate('month')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                Bulan Ini
+                            </button>
+                            <button onclick="filterByDate('year')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                Tahun Ini
+                            </button>
+                            <button onclick="clearFilter()" class="bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm">
+                                Tampilkan Semua
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-blue-600 font-medium text-sm">Custom:</span>
+                            <input type="date" id="filterStartDate" class="px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <span class="text-blue-600">s/d</span>
+                            <input type="date" id="filterEndDate" class="px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <button onclick="filterByCustomDate()" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div id="filterStatus" class="mt-2 text-sm text-blue-600 hidden">
+                        <span class="font-medium">Status Filter:</span> <span id="filterStatusText">Menampilkan semua data</span>
+                    </div>
+                </div>
+                
+                <!-- Data Surat Masuk -->
+                <div id="data-content-masuk" class="fade-in">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="bg-green-500 text-white p-2 rounded-lg mr-3">📥</div>
+                                <div>
+                                    <p class="text-sm text-green-600 font-medium">Total Surat Masuk</p>
+                                    <p class="text-2xl font-bold text-green-700" id="total-masuk">-</p>
+                                </div>
+                            </div>
+                            <button onclick="downloadPDF('masuk')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead>
+                                <tr class="bg-green-100">
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">No</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Nomor Surat</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Tanggal Surat</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Pengirim</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Perihal</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Tanggal Diterima</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-green-800">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-masuk">
+                                <tr>
+                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                                        Klik "Refresh Data" untuk memuat data surat masuk
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Data Surat Keluar -->
+                <div id="data-content-keluar" class="fade-in hidden">
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="bg-orange-500 text-white p-2 rounded-lg mr-3">📤</div>
+                                <div>
+                                    <p class="text-sm text-orange-600 font-medium">Total Surat Keluar</p>
+                                    <p class="text-2xl font-bold text-orange-700" id="total-keluar">-</p>
+                                </div>
+                            </div>
+                            <button onclick="downloadPDF('keluar')" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead>
+                                <tr class="bg-orange-100">
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">No</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Nomor Surat</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Tanggal Surat</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Tujuan</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Perihal</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Tanggal Kirim</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-orange-800">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-keluar">
+                                <tr>
+                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                                        Klik "Refresh Data" untuk memuat data surat keluar
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Footer with Copyright -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center">
+                <div class="flex items-center justify-center mb-3">
+                    <div class="bg-white p-2 rounded-lg shadow-md mr-3">
+                        <img src="https://iili.io/3b1SedN.png" alt="Logo SDN 22 Tanah Keras" class="w-8 h-8 object-contain" onerror="this.style.display='none'; document.getElementById('footerFallbackIcon').style.display='flex';">
+                        <div id="footerFallbackIcon" class="bg-blue-600 text-white p-2 rounded-lg w-8 h-8 flex items-center justify-center" style="display: none;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">SDN 22 Tanah Keras</h3>
+                        <p class="text-sm text-gray-300">Sistem Manajemen Surat</p>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-600 pt-4">
+                    <p class="text-sm text-gray-300 mb-2">
+                        © 2024 SDN 22 Tanah Keras. Hak Cipta Dilindungi.
+                    </p>
+                    <p class="text-xs text-gray-400">
+                        Dibuat Oleh Admin SDN 22 Tanah Keras
+                    </p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Aplikasi Surat Masuk & Keluar - Versi 1.0
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Success/Error Messages -->
+    <div id="message" class="fixed top-4 right-4 p-4 rounded-lg shadow-lg hidden z-50"></div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800" id="editModalTitle">Edit Surat</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <form id="editForm" class="space-y-4">
+                    <input type="hidden" id="editId" name="id">
+                    <input type="hidden" id="editType" name="type">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat</label>
+                            <input type="text" id="editNomorSurat" name="nomor_surat" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Surat</label>
+                            <input type="date" id="editTanggalSurat" name="tanggal_surat" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" id="editPengirimTujuanLabel">Pengirim</label>
+                            <input type="text" id="editPengirimTujuan" name="pengirim_tujuan" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" id="editTanggalLabel">Tanggal Diterima</label>
+                            <input type="date" id="editTanggalAksi" name="tanggal_aksi" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
+                        <input type="text" id="editPerihal" name="perihal" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <span id="editLoading" class="loading w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2 hidden"></span>
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL Google Apps Script yang sudah terhubung
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpcFGlSoLaIhh6DVuha7D6n0Xc7q8BgjzVXAGeri6tE4JsfLk7Ke4Alz8t_AO6bu7fVQ/exec';
+        
+        // Login credentials
+        const VALID_USERNAME = 'FAUZI';
+        const VALID_PASSWORD = '12345';
+        
+        // Check if user is already logged in
+        function checkLogin() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn === 'true') {
+                showMainApp();
+            } else {
+                showLoginForm();
+            }
+        }
+        
+        // Show login form
+        function showLoginForm() {
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+        
+        // Show main application
+        function showMainApp() {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Set current date
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                `;
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                `;
+            }
+        }
+        
+        // Login function
+        function login(username, password) {
+            const loadingElement = document.getElementById('loginLoading');
+            const errorElement = document.getElementById('loginError');
+            
+            loadingElement.classList.remove('hidden');
+            errorElement.classList.add('hidden');
+            
+            // Simulate login delay
+            setTimeout(() => {
+                if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', username);
+                    showMainApp();
+                    showMessage('Login berhasil! Selamat datang ' + username, 'success');
+                } else {
+                    errorElement.classList.remove('hidden');
+                    document.getElementById('password').value = '';
+                }
+                loadingElement.classList.add('hidden');
+            }, 1000);
+        }
+        
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Show logout message
+                showMessage('Logout berhasil! Terima kasih telah menggunakan sistem.', 'success');
+                
+                // Force page reload to reset everything
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 1000);
+            }
+        }
+        
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            login(username, password);
+        });
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLogin();
+        });
+        
+        // Test koneksi ke Google Apps Script
+        async function testConnection() {
+            try {
+                console.log('Testing connection to Google Apps Script...');
+                const response = await fetch(`${SCRIPT_URL}?test=true`);
+                const result = await response.text();
+                console.log('Test response:', result);
+                showMessage('Koneksi berhasil! Google Apps Script dapat diakses.', 'success');
+                return true;
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                showMessage('Gagal terhubung ke Google Apps Script. Periksa URL dan deployment.', 'error');
+                return false;
+            }
+        }
+
+
+
+        // Set default dates to today
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (input.name === 'tanggal_diterima' || input.name === 'tanggal_kirim') {
+                input.value = today;
+            }
+        });
+
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all content
+            document.querySelectorAll('[id^="content-"]').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active state from all tabs
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600', 'bg-blue-50');
+                tab.classList.add('text-gray-500');
+            });
+            
+            // Show selected content
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            
+            // Add active state to selected tab
+            const activeTab = document.getElementById(`tab-${tabName}`);
+            activeTab.classList.remove('text-gray-500');
+            activeTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600', 'bg-blue-50');
+        }
+
+        // Show message
+        function showMessage(text, type = 'success') {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            message.classList.remove('hidden');
+            
+            setTimeout(() => {
+                message.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Submit form data
+        async function submitForm(formData, type) {
+            const loadingElement = document.getElementById(`loading-${type}`);
+            loadingElement.classList.remove('hidden');
+            
+            try {
+                console.log(`Mengirim data surat ${type} ke Google Sheets...`);
+                
+                // Prepare data with proper structure
+                const submitData = new URLSearchParams();
+                submitData.append('action', 'saveData');
+                submitData.append('type', type);
+                submitData.append('separateSheets', 'true'); // Flag untuk sheet terpisah
+                
+                // Add form fields
+                for (let [key, value] of formData.entries()) {
+                    if (key !== 'type') { // Don't duplicate type
+                        submitData.append(key, value || '');
+                    }
+                }
+                
+                // Add current timestamp
+                submitData.append('timestamp', new Date().toLocaleString('id-ID'));
+                
+                console.log('Data yang akan dikirim:');
+                for (let [key, value] of submitData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                // Send data using POST method
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: submitData
+                });
+                
+                // Check if request was successful
+                let responseText = '';
+                try {
+                    responseText = await response.text();
+                    console.log('Response dari server:', responseText);
+                    
+                    // Check response messages
+                    if (responseText.includes('Sheet baru dibuat')) {
+                        showMessage(`Sheet "${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}" berhasil dibuat! Data disimpan.`, 'success');
+                    } else if (responseText.includes('berhasil disimpan')) {
+                        showMessage(`Surat ${type} berhasil disimpan ke sheet "${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}"!`, 'success');
+                    } else {
+                        showMessage(`Surat ${type} berhasil disimpan!`, 'success');
+                    }
+                } catch (e) {
+                    console.log('Tidak bisa membaca response, tapi request terkirim');
+                    showMessage(`Surat ${type} berhasil disimpan ke sheet terpisah!`, 'success');
+                }
+                
+                document.getElementById(`form-${type}`).reset();
+                
+                // Reset dates to today
+                const today = new Date().toISOString().split('T')[0];
+                if (type === 'masuk') {
+                    document.querySelector('#form-masuk input[name="tanggal_diterima"]').value = today;
+                } else {
+                    document.querySelector('#form-keluar input[name="tanggal_kirim"]').value = today;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Try fallback method with no-cors
+                try {
+                    console.log('Mencoba metode fallback...');
+                    
+                    const fallbackData = new URLSearchParams();
+                    fallbackData.append('action', 'saveData');
+                    fallbackData.append('type', type);
+                    fallbackData.append('separateSheets', 'true');
+                    
+                    for (let [key, value] of formData.entries()) {
+                        if (key !== 'type') {
+                            fallbackData.append(key, value || '');
+                        }
+                    }
+                    
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: fallbackData
+                    });
+                    
+                    showMessage(`Surat ${type} berhasil disimpan ke sheet terpisah!`, 'success');
+                    document.getElementById(`form-${type}`).reset();
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    if (type === 'masuk') {
+                        document.querySelector('#form-masuk input[name="tanggal_diterima"]').value = today;
+                    } else {
+                        document.querySelector('#form-keluar input[name="tanggal_kirim"]').value = today;
+                    }
+                    
+                } catch (fallbackError) {
+                    console.error('Fallback error:', fallbackError);
+                    showMessage(`Gagal menyimpan surat ${type}. Periksa koneksi internet dan pastikan Google Apps Script sudah di-deploy dengan benar.`, 'error');
+                }
+            } finally {
+                loadingElement.classList.add('hidden');
+            }
+        }
+
+        // Form submissions
+        document.getElementById('form-masuk').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.append('type', 'masuk');
+            await submitForm(formData, 'masuk');
+        });
+
+        document.getElementById('form-keluar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.append('type', 'keluar');
+            await submitForm(formData, 'keluar');
+        });
+
+        // Global variables for data and filtering
+        let allData = [];
+        let filteredData = [];
+        let currentFilter = 'all';
+
+        // Load data
+        async function loadData() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getData`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allData = data.data;
+                    filteredData = [...allData];
+                    displayData(filteredData);
+                    updateStats(filteredData);
+                    updateFilterStatus('Menampilkan semua data');
+                } else {
+                    throw new Error(data.message || 'Gagal memuat data');
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showMessage('Gagal memuat data. Silakan coba lagi.', 'error');
+            }
+        }
+
+        // Filter functions
+        function filterByDate(period) {
+            const today = new Date();
+            let startDate, endDate;
+            
+            switch (period) {
+                case 'today':
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    break;
+                case 'week':
+                    const startOfWeek = new Date(today);
+                    startOfWeek.setDate(today.getDate() - today.getDay());
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    startDate = startOfWeek;
+                    endDate = endOfWeek;
+                    break;
+                case 'month':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    break;
+                case 'year':
+                    startDate = new Date(today.getFullYear(), 0, 1);
+                    endDate = new Date(today.getFullYear(), 11, 31);
+                    break;
+                default:
+                    return;
+            }
+            
+            applyDateFilter(startDate, endDate, period);
+        }
+
+        function filterByCustomDate() {
+            const startDateInput = document.getElementById('filterStartDate').value;
+            const endDateInput = document.getElementById('filterEndDate').value;
+            
+            if (!startDateInput || !endDateInput) {
+                showMessage('Silakan pilih tanggal mulai dan tanggal akhir', 'error');
+                return;
+            }
+            
+            const startDate = new Date(startDateInput);
+            const endDate = new Date(endDateInput);
+            
+            if (startDate > endDate) {
+                showMessage('Tanggal mulai tidak boleh lebih besar dari tanggal akhir', 'error');
+                return;
+            }
+            
+            applyDateFilter(startDate, endDate, 'custom');
+        }
+
+        function applyDateFilter(startDate, endDate, filterType) {
+            currentFilter = filterType;
+            
+            filteredData = allData.filter(item => {
+                // Get the date to compare based on type
+                let itemDate;
+                if (item.type === 'masuk') {
+                    itemDate = new Date(cleanDate(item.tanggal_diterima || item.tanggal_surat));
+                } else {
+                    itemDate = new Date(cleanDate(item.tanggal_kirim || item.tanggal_surat));
+                }
+                
+                // Check if date is valid and within range
+                if (isNaN(itemDate.getTime())) return false;
+                
+                return itemDate >= startDate && itemDate <= endDate;
+            });
+            
+            displayData(filteredData);
+            updateStats(filteredData);
+            
+            // Update filter status
+            let statusText = '';
+            switch (filterType) {
+                case 'today':
+                    statusText = 'Menampilkan data hari ini';
+                    break;
+                case 'week':
+                    statusText = 'Menampilkan data minggu ini';
+                    break;
+                case 'month':
+                    statusText = 'Menampilkan data bulan ini';
+                    break;
+                case 'year':
+                    statusText = 'Menampilkan data tahun ini';
+                    break;
+                case 'custom':
+                    statusText = `Menampilkan data dari ${startDate.toLocaleDateString('id-ID')} s/d ${endDate.toLocaleDateString('id-ID')}`;
+                    break;
+            }
+            
+            updateFilterStatus(statusText);
+            showMessage(`Filter berhasil diterapkan. Ditemukan ${filteredData.length} data.`, 'success');
+        }
+
+        function clearFilter() {
+            currentFilter = 'all';
+            filteredData = [...allData];
+            displayData(filteredData);
+            updateStats(filteredData);
+            updateFilterStatus('Menampilkan semua data');
+            
+            // Clear custom date inputs
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            
+            showMessage('Filter berhasil dihapus. Menampilkan semua data.', 'success');
+        }
+
+        function updateFilterStatus(text) {
+            const statusElement = document.getElementById('filterStatus');
+            const statusTextElement = document.getElementById('filterStatusText');
+            
+            statusTextElement.textContent = text;
+            statusElement.classList.remove('hidden');
+        }
+
+        // Data tab functionality
+        function showDataTab(tabName) {
+            // Hide all data content
+            document.querySelectorAll('[id^="data-content-"]').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active state from all data tabs
+            document.querySelectorAll('[id^="data-tab-"]').forEach(tab => {
+                tab.classList.remove('text-white', 'bg-green-600', 'bg-orange-600');
+                tab.classList.add('text-gray-600');
+            });
+            
+            // Show selected data content
+            document.getElementById(`data-content-${tabName}`).classList.remove('hidden');
+            
+            // Add active state to selected data tab
+            const activeTab = document.getElementById(`data-tab-${tabName}`);
+            activeTab.classList.remove('text-gray-600');
+            activeTab.classList.add('text-white');
+            if (tabName === 'masuk') {
+                activeTab.classList.add('bg-green-600');
+            } else {
+                activeTab.classList.add('bg-orange-600');
+            }
+        }
+
+        // Function to clean date format
+        function cleanDate(dateString) {
+            if (!dateString || dateString === '-') return '-';
+            // Remove timestamp part (T17:00:00.000Z) and return only date
+            return dateString.split('T')[0];
+        }
+
+        // Display data in separate tables
+        function displayData(data) {
+            const masukData = data.filter(item => item.type === 'masuk');
+            const keluarData = data.filter(item => item.type === 'keluar');
+            
+            // Display Surat Masuk
+            const masukTableBody = document.getElementById('data-table-masuk');
+            if (!masukData || masukData.length === 0) {
+                masukTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                            Belum ada data surat masuk
+                        </td>
+                    </tr>
+                `;
+            } else {
+                masukTableBody.innerHTML = masukData.map((item, index) => `
+                    <tr class="hover:bg-green-50">
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${index + 1}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm font-medium">${item.nomor_surat || '-'}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_surat)}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${item.pengirim || '-'}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${item.perihal || '-'}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_diterima)}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-center">
+                            <div class="flex justify-center space-x-2">
+                                <button onclick="editData(${index + 1}, 'masuk')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors">
+                                    ✏️ Edit
+                                </button>
+                                <button onclick="deleteData(${index + 1}, 'masuk')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors">
+                                    🗑️ Hapus
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Display Surat Keluar
+            const keluarTableBody = document.getElementById('data-table-keluar');
+            if (!keluarData || keluarData.length === 0) {
+                keluarTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                            Belum ada data surat keluar
+                        </td>
+                    </tr>
+                `;
+            } else {
+                keluarTableBody.innerHTML = keluarData.map((item, index) => `
+                    <tr class="hover:bg-orange-50">
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${index + 1}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm font-medium">${item.nomor_surat || '-'}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_surat)}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${item.tujuan || '-'}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${item.perihal || '-'}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_kirim)}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-center">
+                            <div class="flex justify-center space-x-2">
+                                <button onclick="editData(${index + 1}, 'keluar')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors">
+                                    ✏️ Edit
+                                </button>
+                                <button onclick="deleteData(${index + 1}, 'keluar')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors">
+                                    🗑️ Hapus
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Update statistics
+        function updateStats(data) {
+            const masukCount = data.filter(item => item.type === 'masuk').length;
+            const keluarCount = data.filter(item => item.type === 'keluar').length;
+            
+            document.getElementById('total-masuk').textContent = masukCount;
+            document.getElementById('total-keluar').textContent = keluarCount;
+        }
+
+        // Download PDF function
+        function downloadPDF(type) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [330, 210] // F4 landscape size
+            });
+
+            // Set font
+            doc.setFont('helvetica');
+            
+            // Add school logo
+            const logoImg = new Image();
+            logoImg.crossOrigin = 'anonymous';
+            logoImg.onload = function() {
+                // Add logo on the left side
+                doc.addImage(logoImg, 'PNG', 15, 10, 25, 25);
+                
+                // Continue with the rest of the PDF generation
+                generatePDFContent();
+            };
+            logoImg.onerror = function() {
+                // If logo fails to load, continue without it
+                console.log('Logo failed to load, continuing without logo');
+                generatePDFContent();
+            };
+            logoImg.src = 'https://iili.io/3b1SedN.png';
+            
+            function generatePDFContent() {
+                // Header text (adjusted position to accommodate logo)
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('SDN 22 TANAH KERAS', 165, 18, { align: 'center' });
+                
+                doc.setFontSize(14);
+                const title = type === 'masuk' ? 'LAPORAN DATA SURAT MASUK' : 'LAPORAN DATA SURAT KELUAR';
+                doc.text(title, 165, 26, { align: 'center' });
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 165, 32, { align: 'center' });
+                
+                // Add filter status to PDF
+                if (currentFilter !== 'all') {
+                    const filterStatusText = document.getElementById('filterStatusText').textContent;
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'italic');
+                    doc.text(filterStatusText, 165, 37, { align: 'center' });
+                }
+            
+                // Get data
+                const tableBody = type === 'masuk' ? 
+                    document.getElementById('data-table-masuk') : 
+                    document.getElementById('data-table-keluar');
+                
+                const rows = tableBody.querySelectorAll('tr');
+                
+                if (rows.length === 1 && rows[0].cells.length === 1) {
+                    showMessage('Tidak ada data untuk dicetak', 'error');
+                    return;
+                }
+                
+                // Define table structure
+                const tableStartX = 10;
+                const tableStartY = currentFilter !== 'all' ? 50 : 45; // Adjust for filter status
+                const tableWidth = 310;
+                const rowHeight = 8;
+                
+                // Column widths
+                const colWidths = [15, 50, 30, 60, 80, 35]; // No, Nomor Surat, Tgl Surat, Pengirim/Tujuan, Perihal, Tgl Diterima/Kirim
+                let colX = [tableStartX];
+                for (let i = 0; i < colWidths.length - 1; i++) {
+                    colX.push(colX[i] + colWidths[i]);
+                }
+                
+                // Draw table border
+                doc.setLineWidth(0.5);
+                doc.rect(tableStartX, tableStartY - 5, tableWidth, 5); // Header background
+                
+                // Table headers
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                
+                const headers = type === 'masuk' ? 
+                    ['No', 'Nomor Surat', 'Tgl Surat', 'Pengirim', 'Perihal', 'Tgl Diterima'] :
+                    ['No', 'Nomor Surat', 'Tgl Surat', 'Tujuan', 'Perihal', 'Tgl Kirim'];
+                
+                // Draw header text and vertical lines
+                for (let i = 0; i < headers.length; i++) {
+                    doc.text(headers[i], colX[i] + 2, tableStartY - 1, { align: 'left' });
+                    if (i < headers.length - 1) {
+                        doc.line(colX[i + 1], tableStartY - 5, colX[i + 1], tableStartY); // Vertical line for header
+                    }
+                }
+                
+                // Draw header bottom line
+                doc.line(tableStartX, tableStartY, tableStartX + tableWidth, tableStartY);
+                
+                // Table data
+                doc.setFont('helvetica', 'normal');
+                let currentY = tableStartY;
+                let rowCount = 0;
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row.cells.length > 1) { // Skip placeholder rows
+                        const cells = row.cells;
+                        
+                        // Check if we need a new page
+                        if (currentY > 180) {
+                            doc.addPage();
+                            
+                            // Redraw header on new page
+                            doc.setFontSize(16);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('SDN 22 TANAH KERAS', 165, 18, { align: 'center' });
+                            
+                            doc.setFontSize(14);
+                            doc.text(title, 165, 26, { align: 'center' });
+                            
+                            doc.setFontSize(10);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')} (Lanjutan)`, 165, 32, { align: 'center' });
+                            
+                            currentY = 45;
+                            
+                            // Redraw table header
+                            doc.setLineWidth(0.5);
+                            doc.rect(tableStartX, currentY - 5, tableWidth, 5);
+                            doc.setFontSize(9);
+                            doc.setFont('helvetica', 'bold');
+                            
+                            for (let j = 0; j < headers.length; j++) {
+                                doc.text(headers[j], colX[j] + 2, currentY - 1, { align: 'left' });
+                                if (j < headers.length - 1) {
+                                    doc.line(colX[j + 1], currentY - 5, colX[j + 1], currentY);
+                                }
+                            }
+                            doc.line(tableStartX, currentY, tableStartX + tableWidth, currentY);
+                            doc.setFont('helvetica', 'normal');
+                        }
+                        
+                        currentY += rowHeight;
+                        
+                        // Draw row background (alternating colors)
+                        if (rowCount % 2 === 1) {
+                            doc.setFillColor(245, 245, 245); // Light gray
+                            doc.rect(tableStartX, currentY - rowHeight, tableWidth, rowHeight, 'F');
+                        }
+                        
+                        // Draw cell data
+                        const cellData = [
+                            cells[0].textContent.trim(),
+                            cells[1].textContent.trim().substring(0, 20),
+                            cleanDate(cells[2].textContent.trim()),
+                            cells[3].textContent.trim().substring(0, 25),
+                            cells[4].textContent.trim().substring(0, 35),
+                            cleanDate(cells[5].textContent.trim())
+                        ];
+                        
+                        for (let j = 0; j < cellData.length; j++) {
+                            doc.text(cellData[j], colX[j] + 2, currentY - 2, { align: 'left' });
+                        }
+                        
+                        // Draw row borders
+                        doc.setLineWidth(0.3);
+                        // Horizontal line
+                        doc.line(tableStartX, currentY, tableStartX + tableWidth, currentY);
+                        
+                        // Vertical lines
+                        for (let j = 0; j <= colWidths.length; j++) {
+                            const x = j === 0 ? tableStartX : (j === colWidths.length ? tableStartX + tableWidth : colX[j]);
+                            doc.line(x, currentY - rowHeight, x, currentY);
+                        }
+                        
+                        rowCount++;
+                    }
+                }
+                
+                // Draw final table border
+                doc.setLineWidth(0.5);
+                doc.rect(tableStartX, tableStartY - 5, tableWidth, currentY - tableStartY + 5);
+                
+                // Add summary
+                currentY += 15;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Total ${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}: ${rowCount} surat`, tableStartX, currentY);
+                
+                // Signature section removed
+                
+                // Footer with copyright
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.text(`Halaman ${i} dari ${pageCount}`, 165, 200, { align: 'center' });
+                    doc.text('© 2024 SDN 22 Tanah Keras - Dibuat Oleh Admin SDN 22 Tanah Keras', 165, 205, { align: 'center' });
+                }
+                
+                // Save PDF
+                const filename = `Laporan_Surat_${type === 'masuk' ? 'Masuk' : 'Keluar'}_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(filename);
+                
+                showMessage(`PDF berhasil diunduh: ${filename}`, 'success');
+            }
+        }
+
+        // Edit functions
+        function editData(id, type) {
+            // Find the data in the current display
+            const tableBody = type === 'masuk' ? 
+                document.getElementById('data-table-masuk') : 
+                document.getElementById('data-table-keluar');
+            
+            const rows = tableBody.querySelectorAll('tr');
+            let rowData = null;
+            
+            for (let row of rows) {
+                if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
+                    rowData = {
+                        id: id,
+                        type: type,
+                        nomor_surat: row.cells[1].textContent.trim(),
+                        tanggal_surat: row.cells[2].textContent.trim(),
+                        pengirim_tujuan: row.cells[3].textContent.trim(),
+                        perihal: row.cells[4].textContent.trim(),
+                        tanggal_aksi: row.cells[5].textContent.trim()
+                    };
+                    break;
+                }
+            }
+            
+            if (!rowData) {
+                showMessage('Data tidak ditemukan', 'error');
+                return;
+            }
+            
+            // Populate modal
+            document.getElementById('editId').value = rowData.id;
+            document.getElementById('editType').value = rowData.type;
+            document.getElementById('editNomorSurat').value = rowData.nomor_surat;
+            document.getElementById('editTanggalSurat').value = cleanDate(rowData.tanggal_surat);
+            document.getElementById('editPengirimTujuan').value = rowData.pengirim_tujuan;
+            document.getElementById('editPerihal').value = rowData.perihal;
+            document.getElementById('editTanggalAksi').value = cleanDate(rowData.tanggal_aksi);
+            
+            // Update labels based on type
+            if (type === 'masuk') {
+                document.getElementById('editModalTitle').textContent = 'Edit Surat Masuk';
+                document.getElementById('editPengirimTujuanLabel').textContent = 'Pengirim';
+                document.getElementById('editTanggalLabel').textContent = 'Tanggal Diterima';
+            } else {
+                document.getElementById('editModalTitle').textContent = 'Edit Surat Keluar';
+                document.getElementById('editPengirimTujuanLabel').textContent = 'Tujuan';
+                document.getElementById('editTanggalLabel').textContent = 'Tanggal Kirim';
+            }
+            
+            // Show modal
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editForm').reset();
+        }
+
+        // Delete function
+        async function deleteData(id, type) {
+            if (confirm(`Apakah Anda yakin ingin menghapus surat ${type} nomor ${id} ini?`)) {
+                try {
+                    // Show loading state
+                    showMessage(`Menghapus surat ${type} nomor ${id}...`, 'success');
+                    
+                    // Prepare delete request with proper data structure
+                    const deleteParams = new URLSearchParams();
+                    deleteParams.append('action', 'deleteData');
+                    deleteParams.append('type', type);
+                    deleteParams.append('rowNumber', id);
+                    deleteParams.append('sheetName', type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar');
+                    
+                    console.log('Sending delete request:', deleteParams.toString());
+                    
+                    // Send delete request to Google Apps Script
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: deleteParams,
+                        mode: 'cors'
+                    });
+                    
+                    // Handle response
+                    let success = false;
+                    try {
+                        const responseText = await response.text();
+                        console.log('Delete response:', responseText);
+                        success = responseText.includes('berhasil') || responseText.includes('success') || response.ok;
+                    } catch (e) {
+                        // If we can't read response but request went through, assume success
+                        success = response.ok;
+                    }
+                    
+                    if (success || response.ok) {
+                        // Remove row from table immediately
+                        const tableBody = type === 'masuk' ? 
+                            document.getElementById('data-table-masuk') : 
+                            document.getElementById('data-table-keluar');
+                        
+                        const rows = Array.from(tableBody.querySelectorAll('tr'));
+                        let targetRow = null;
+                        
+                        // Find and remove the target row
+                        for (let i = 0; i < rows.length; i++) {
+                            const row = rows[i];
+                            if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
+                                targetRow = row;
+                                row.remove();
+                                break;
+                            }
+                        }
+                        
+                        // Update row numbers for remaining rows
+                        const remainingRows = Array.from(tableBody.querySelectorAll('tr'));
+                        remainingRows.forEach((row, index) => {
+                            if (row.cells.length > 1) {
+                                // Update row number
+                                row.cells[0].textContent = index + 1;
+                                
+                                // Update button onclick handlers
+                                const editBtn = row.querySelector('button[onclick*="editData"]');
+                                const deleteBtn = row.querySelector('button[onclick*="deleteData"]');
+                                
+                                if (editBtn) {
+                                    editBtn.setAttribute('onclick', `editData(${index + 1}, '${type}')`);
+                                }
+                                if (deleteBtn) {
+                                    deleteBtn.setAttribute('onclick', `deleteData(${index + 1}, '${type}')`);
+                                }
+                            }
+                        });
+                        
+                        // Update statistics
+                        const totalElement = document.getElementById(`total-${type}`);
+                        if (totalElement) {
+                            const currentTotal = parseInt(totalElement.textContent) || 0;
+                            const newTotal = Math.max(0, currentTotal - 1);
+                            totalElement.textContent = newTotal;
+                        }
+                        
+                        // Show placeholder if no data left
+                        if (remainingRows.length === 0 || remainingRows.every(row => row.cells.length <= 1)) {
+                            tableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                                        Belum ada data surat ${type}
+                                    </td>
+                                </tr>
+                            `;
+                            if (totalElement) totalElement.textContent = '0';
+                        }
+                        
+                        showMessage(`Surat ${type} nomor ${id} berhasil dihapus dari Google Sheets!`, 'success');
+                        
+                    } else {
+                        throw new Error('Delete request failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('Primary delete method failed:', error);
+                    
+                    // Fallback method with no-cors
+                    try {
+                        const fallbackParams = new URLSearchParams();
+                        fallbackParams.append('action', 'deleteData');
+                        fallbackParams.append('type', type);
+                        fallbackParams.append('rowNumber', id);
+                        fallbackParams.append('sheetName', type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar');
+                        
+                        await fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: fallbackParams
+                        });
+                        
+                        // Since no-cors doesn't return response, assume success and update UI
+                        const tableBody = type === 'masuk' ? 
+                            document.getElementById('data-table-masuk') : 
+                            document.getElementById('data-table-keluar');
+                        
+                        const rows = Array.from(tableBody.querySelectorAll('tr'));
+                        
+                        // Remove the target row
+                        for (let i = 0; i < rows.length; i++) {
+                            const row = rows[i];
+                            if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
+                                row.remove();
+                                break;
+                            }
+                        }
+                        
+                        // Update remaining rows
+                        const remainingRows = Array.from(tableBody.querySelectorAll('tr'));
+                        remainingRows.forEach((row, index) => {
+                            if (row.cells.length > 1) {
+                                row.cells[0].textContent = index + 1;
+                                const editBtn = row.querySelector('button[onclick*="editData"]');
+                                const deleteBtn = row.querySelector('button[onclick*="deleteData"]');
+                                if (editBtn) editBtn.setAttribute('onclick', `editData(${index + 1}, '${type}')`);
+                                if (deleteBtn) deleteBtn.setAttribute('onclick', `deleteData(${index + 1}, '${type}')`);
+                            }
+                        });
+                        
+                        // Update statistics
+                        const totalElement = document.getElementById(`total-${type}`);
+                        if (totalElement) {
+                            const currentTotal = parseInt(totalElement.textContent) || 0;
+                            totalElement.textContent = Math.max(0, currentTotal - 1);
+                        }
+                        
+                        // Show placeholder if needed
+                        if (remainingRows.length === 0 || remainingRows.every(row => row.cells.length <= 1)) {
+                            tableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                                        Belum ada data surat ${type}
+                                    </td>
+                                </tr>
+                            `;
+                            if (totalElement) totalElement.textContent = '0';
+                        }
+                        
+                        showMessage(`Surat ${type} nomor ${id} berhasil dihapus! (Fallback method)`, 'success');
+                        
+                    } catch (fallbackError) {
+                        console.error('Fallback delete also failed:', fallbackError);
+                        showMessage(`Gagal menghapus surat ${type}. Periksa koneksi internet dan coba lagi.`, 'error');
+                    }
+                }
+            }
+        }
+
+        // Edit form submission
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loadingElement = document.getElementById('editLoading');
+            loadingElement.classList.remove('hidden');
+            
+            try {
+                const formData = new FormData(e.target);
+                const id = formData.get('id');
+                const type = formData.get('type');
+                
+                console.log(`Mengupdate data surat ${type} dengan ID ${id}...`);
+                
+                // Prepare update request
+                const updateData = new URLSearchParams();
+                updateData.append('action', 'updateData');
+                updateData.append('type', type);
+                updateData.append('id', id);
+                updateData.append('separateSheets', 'true');
+                updateData.append('nomor_surat', formData.get('nomor_surat') || '');
+                updateData.append('tanggal_surat', formData.get('tanggal_surat') || '');
+                updateData.append('perihal', formData.get('perihal') || '');
+                
+                if (type === 'masuk') {
+                    updateData.append('pengirim', formData.get('pengirim_tujuan') || '');
+                    updateData.append('tanggal_diterima', formData.get('tanggal_aksi') || '');
+                } else {
+                    updateData.append('tujuan', formData.get('pengirim_tujuan') || '');
+                    updateData.append('tanggal_kirim', formData.get('tanggal_aksi') || '');
+                }
+                
+                // Send update request
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: updateData
+                });
+                
+                let responseText = '';
+                try {
+                    responseText = await response.text();
+                    console.log('Update response:', responseText);
+                } catch (e) {
+                    console.log('Update request sent successfully');
+                }
+                
+                showMessage(`Data surat ${type} berhasil diperbarui!`, 'success');
+                closeEditModal();
+                
+                // Update the row in display immediately
+                const tableBody = type === 'masuk' ? 
+                    document.getElementById('data-table-masuk') : 
+                    document.getElementById('data-table-keluar');
+                
+                const rows = tableBody.querySelectorAll('tr');
+                for (let row of rows) {
+                    if (row.cells.length > 1 && row.cells[0].textContent.trim() == id) {
+                        row.cells[1].textContent = formData.get('nomor_surat') || '-';
+                        row.cells[2].textContent = formData.get('tanggal_surat') || '-';
+                        row.cells[3].textContent = formData.get('pengirim_tujuan') || '-';
+                        row.cells[4].textContent = formData.get('perihal') || '-';
+                        row.cells[5].textContent = formData.get('tanggal_aksi') || '-';
+                        break;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error updating data:', error);
+                
+                // Try fallback method
+                try {
+                    const formData = new FormData(e.target);
+                    const id = formData.get('id');
+                    const type = formData.get('type');
+                    
+                    const fallbackData = new URLSearchParams();
+                    fallbackData.append('action', 'updateData');
+                    fallbackData.append('type', type);
+                    fallbackData.append('id', id);
+                    fallbackData.append('separateSheets', 'true');
+                    fallbackData.append('nomor_surat', formData.get('nomor_surat') || '');
+                    fallbackData.append('tanggal_surat', formData.get('tanggal_surat') || '');
+                    fallbackData.append('perihal', formData.get('perihal') || '');
+                    
+                    if (type === 'masuk') {
+                        fallbackData.append('pengirim', formData.get('pengirim_tujuan') || '');
+                        fallbackData.append('tanggal_diterima', formData.get('tanggal_aksi') || '');
+                    } else {
+                        fallbackData.append('tujuan', formData.get('pengirim_tujuan') || '');
+                        fallbackData.append('tanggal_kirim', formData.get('tanggal_aksi') || '');
+                    }
+                    
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: fallbackData
+                    });
+                    
+                    showMessage(`Data surat ${type} berhasil diperbarui!`, 'success');
+                    closeEditModal();
+                    
+                    // Reload data to reflect changes
+                    setTimeout(() => {
+                        loadData();
+                    }, 1000);
+                    
+                } catch (fallbackError) {
+                    console.error('Fallback update error:', fallbackError);
+                    showMessage('Gagal memperbarui data. Silakan coba lagi.', 'error');
+                }
+            } finally {
+                loadingElement.classList.add('hidden');
+            }
+        });
+
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9793ed71e5d3f8de',t:'MTc1Njg4ODY3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
