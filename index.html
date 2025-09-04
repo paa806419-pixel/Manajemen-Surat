@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Surat Masuk & Keluar - SDN 22 Tanah Keras</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" onload="console.log('jsPDF loaded successfully')" onerror="console.error('Failed to load jsPDF')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" onload="console.log('jsPDF AutoTable loaded successfully')" onerror="console.error('Failed to load jsPDF AutoTable')"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -1551,13 +1551,28 @@
         // Download PDF function
         function downloadPDF(type) {
             try {
-                // Check if jsPDF is loaded
-                if (typeof window.jsPDF === 'undefined') {
+                // Check if jsPDF is loaded with multiple fallback checks
+                let jsPDF = null;
+                
+                if (typeof window.jsPDF !== 'undefined') {
+                    jsPDF = window.jsPDF.jsPDF || window.jsPDF;
+                } else if (typeof jsPDF !== 'undefined') {
+                    // Global jsPDF variable
+                    jsPDF = window.jsPDF || jsPDF;
+                } else {
+                    // Try to access from global scope
+                    try {
+                        jsPDF = eval('jsPDF');
+                    } catch (e) {
+                        console.error('jsPDF not found in any scope');
+                    }
+                }
+                
+                if (!jsPDF) {
                     showMessage('Library PDF belum dimuat. Silakan refresh halaman dan coba lagi.', 'error');
+                    console.error('jsPDF library not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
                     return;
                 }
-
-                const { jsPDF } = window.jsPDF;
                 
                 // Get filtered data for the specific type
                 const dataToExport = filteredData.filter(item => item.type === type);
@@ -1573,6 +1588,8 @@
                     unit: 'mm',
                     format: 'a4'
                 });
+                
+                console.log('PDF document created successfully');
 
                 // Set font
                 doc.setFont('helvetica');
@@ -2028,9 +2045,30 @@
             }, 4000);
         }
         
+        // Check PDF library status
+        function checkPDFLibrary() {
+            setTimeout(() => {
+                const jsPDFAvailable = typeof window.jsPDF !== 'undefined';
+                const autoTableAvailable = typeof window.jsPDF?.jsPDF?.prototype?.autoTable === 'function' || 
+                                         (window.jsPDF && typeof window.jsPDF.autoTable === 'function');
+                
+                console.log('PDF Library Status:');
+                console.log('- jsPDF available:', jsPDFAvailable);
+                console.log('- AutoTable available:', autoTableAvailable);
+                console.log('- window.jsPDF:', typeof window.jsPDF);
+                
+                if (jsPDFAvailable) {
+                    console.log('✅ PDF library berhasil dimuat');
+                } else {
+                    console.error('❌ PDF library gagal dimuat');
+                }
+            }, 2000);
+        }
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
             checkLogin();
+            checkPDFLibrary();
             
             // Initialize auto-sync after login check
             setTimeout(() => {
@@ -2040,5 +2078,5 @@
             }, 1000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97998826407345c8',t:'MTc1Njk0NzQzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979991cb544e45c8',t:'MTc1Njk0NzgzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
