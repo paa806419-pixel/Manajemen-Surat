@@ -142,6 +142,28 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
                         <input type="text" name="perihal" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload File Surat (Opsional)</label>
+                        <div class="relative">
+                            <input type="file" name="file_surat" id="file-masuk" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="mt-2 text-sm text-gray-500">
+                                <span class="font-medium">Format yang didukung:</span> PDF, DOC, DOCX, JPG, JPEG, PNG (Maksimal 10MB)
+                            </div>
+                            <div id="file-preview-masuk" class="mt-3 hidden">
+                                <div class="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="file-name-masuk" class="text-sm text-green-700 font-medium"></span>
+                                    <button type="button" onclick="clearFile('masuk')" class="ml-auto text-green-600 hover:text-green-800">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center">
                         <span id="loading-masuk" class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2 hidden"></span>
                         Simpan Surat Masuk
@@ -179,6 +201,28 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
                         <input type="text" name="perihal" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload File Surat (Opsional)</label>
+                        <div class="relative">
+                            <input type="file" name="file_surat" id="file-keluar" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                            <div class="mt-2 text-sm text-gray-500">
+                                <span class="font-medium">Format yang didukung:</span> PDF, DOC, DOCX, JPG, JPEG, PNG (Maksimal 10MB)
+                            </div>
+                            <div id="file-preview-keluar" class="mt-3 hidden">
+                                <div class="flex items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <svg class="w-5 h-5 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="file-name-keluar" class="text-sm text-orange-700 font-medium"></span>
+                                    <button type="button" onclick="clearFile('keluar')" class="ml-auto text-orange-600 hover:text-orange-800">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <button type="submit" class="w-full bg-orange-600 text-white py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center justify-center">
                         <span id="loading-keluar" class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2 hidden"></span>
@@ -226,6 +270,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5L12 5H5a2 2 0 00-2 2z"></path>
                             </svg>
                             🔄 Pulihkan Backup
+                        </button>
+                        <button onclick="showPDFHistory()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            📄 Riwayat PDF
                         </button>
                         <button onclick="clearLocalStorage()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,12 +374,13 @@
                                     <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Pengirim</th>
                                     <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Perihal</th>
                                     <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-green-800">Tanggal Diterima</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-green-800">File</th>
                                     <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-green-800">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="data-table-masuk">
                                 <tr>
-                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                                    <td colspan="8" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
                                         Klik "📱 Data Lokal" untuk memuat data surat masuk
                                     </td>
                                 </tr>
@@ -368,12 +419,13 @@
                                     <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Tujuan</th>
                                     <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Perihal</th>
                                     <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-orange-800">Tanggal Kirim</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-orange-800">File</th>
                                     <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-orange-800">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="data-table-keluar">
                                 <tr>
-                                    <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                                    <td colspan="8" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
                                         Klik "📱 Data Lokal" untuk memuat data surat keluar
                                     </td>
                                 </tr>
@@ -471,6 +523,40 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF History Modal -->
+    <div id="pdfHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <span class="bg-purple-100 text-purple-600 p-2 rounded-lg mr-3">📄</span>
+                        Riwayat PDF yang Dikirim ke Google Sheets
+                    </h3>
+                    <button onclick="closePDFHistoryModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <button onclick="loadPDFHistory()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Muat Riwayat PDF
+                    </button>
+                </div>
+                
+                <div id="pdfHistoryContent" class="overflow-x-auto">
+                    <div class="text-center py-8 text-gray-500">
+                        Klik "Muat Riwayat PDF" untuk melihat daftar PDF yang telah dikirim ke Google Sheets
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -929,6 +1015,77 @@
             }, 3000);
         }
 
+        // File upload functions
+        function setupFileUpload() {
+            // Setup file input listeners
+            document.getElementById('file-masuk').addEventListener('change', function(e) {
+                handleFileSelect(e, 'masuk');
+            });
+            
+            document.getElementById('file-keluar').addEventListener('change', function(e) {
+                handleFileSelect(e, 'keluar');
+            });
+        }
+        
+        function handleFileSelect(event, type) {
+            const file = event.target.files[0];
+            const preview = document.getElementById(`file-preview-${type}`);
+            const fileName = document.getElementById(`file-name-${type}`);
+            
+            if (file) {
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                    showMessage('Ukuran file terlalu besar! Maksimal 10MB.', 'error');
+                    event.target.value = '';
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    showMessage('Format file tidak didukung! Gunakan PDF, DOC, DOCX, JPG, JPEG, atau PNG.', 'error');
+                    event.target.value = '';
+                    return;
+                }
+                
+                // Show preview
+                fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+                preview.classList.remove('hidden');
+                
+                showMessage(`File "${file.name}" berhasil dipilih`, 'success');
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+        
+        function clearFile(type) {
+            const fileInput = document.getElementById(`file-${type}`);
+            const preview = document.getElementById(`file-preview-${type}`);
+            
+            fileInput.value = '';
+            preview.classList.add('hidden');
+            
+            showMessage('File berhasil dihapus', 'info');
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
         // Submit form data
         async function submitForm(formData, type) {
             const loadingElement = document.getElementById(`loading-${type}`);
@@ -936,8 +1093,28 @@
             
             // Convert FormData to object for localStorage
             const dataObject = {};
+            let fileData = null;
+            
             for (let [key, value] of formData.entries()) {
-                if (key !== 'type') {
+                if (key === 'file_surat' && value && value.size > 0) {
+                    // Handle file upload
+                    try {
+                        const base64Data = await fileToBase64(value);
+                        fileData = {
+                            name: value.name,
+                            size: value.size,
+                            type: value.type,
+                            data: base64Data
+                        };
+                        dataObject.file_name = value.name;
+                        dataObject.file_size = formatFileSize(value.size);
+                        dataObject.file_type = value.type;
+                        dataObject.file_data = base64Data;
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        showMessage('Gagal memproses file. Data akan disimpan tanpa file.', 'warning');
+                    }
+                } else if (key !== 'type' && key !== 'file_surat') {
                     dataObject[key] = value || '';
                 }
             }
@@ -950,6 +1127,12 @@
                 
                 document.getElementById(`form-${type}`).reset();
                 
+                // Clear file preview
+                const preview = document.getElementById(`file-preview-${type}`);
+                if (preview) {
+                    preview.classList.add('hidden');
+                }
+                
                 // Reset dates to today
                 const today = new Date().toISOString().split('T')[0];
                 if (type === 'masuk') {
@@ -958,7 +1141,8 @@
                     document.querySelector('#form-keluar input[name="tanggal_kirim"]').value = today;
                 }
                 
-                showMessage(`Surat ${type} berhasil disimpan ke penyimpanan lokal!`, 'success');
+                const fileMessage = fileData ? ' dengan file' : '';
+                showMessage(`Surat ${type}${fileMessage} berhasil disimpan ke penyimpanan lokal!`, 'success');
             }
             
             // Try to sync with Google Sheets (optional)
@@ -974,7 +1158,20 @@
                 // Add form fields
                 for (let [key, value] of formData.entries()) {
                     if (key !== 'type') {
-                        submitData.append(key, value || '');
+                        if (key === 'file_surat' && value && value.size > 0) {
+                            // Handle file for Google Sheets
+                            try {
+                                const base64Data = await fileToBase64(value);
+                                submitData.append('file_name', value.name);
+                                submitData.append('file_size', formatFileSize(value.size));
+                                submitData.append('file_type', value.type);
+                                submitData.append('file_data', base64Data);
+                            } catch (error) {
+                                console.error('Error processing file for Google Sheets:', error);
+                            }
+                        } else if (key !== 'file_surat') {
+                            submitData.append(key, value || '');
+                        }
                     }
                 }
                 
@@ -1475,7 +1672,7 @@
             if (!masukData || masukData.length === 0) {
                 masukTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                        <td colspan="8" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
                             Belum ada data surat masuk
                         </td>
                     </tr>
@@ -1489,6 +1686,17 @@
                         <td class="border border-gray-300 px-4 py-3 text-sm">${item.pengirim || '-'}</td>
                         <td class="border border-gray-300 px-4 py-3 text-sm">${item.perihal || '-'}</td>
                         <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_diterima)}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-center text-sm">
+                            ${item.file_name ? `
+                                <div class="flex flex-col items-center space-y-1">
+                                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded" title="${item.file_name}">
+                                        📎 ${item.file_name.length > 15 ? item.file_name.substring(0, 12) + '...' : item.file_name}
+                                    </span>
+                                    <span class="text-xs text-gray-500">${item.file_size || ''}</span>
+                                    ${item.file_data ? `<button onclick="downloadFile('${item.file_data}', '${item.file_name}', '${item.file_type}')" class="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition-colors">📥 Download</button>` : ''}
+                                </div>
+                            ` : '<span class="text-gray-400 text-xs">Tidak ada file</span>'}
+                        </td>
                         <td class="border border-gray-300 px-4 py-3 text-center">
                             <div class="flex justify-center space-x-2 items-center">
                                 ${item.syncedFromSheets ? '<span class="text-xs bg-green-100 text-green-600 px-1 py-0.5 rounded" title="Data tersinkronisasi dengan Google Sheets">🔗</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded" title="Data lokal saja">📱</span>'}
@@ -1509,7 +1717,7 @@
             if (!keluarData || keluarData.length === 0) {
                 keluarTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                        <td colspan="8" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
                             Belum ada data surat keluar
                         </td>
                     </tr>
@@ -1523,6 +1731,17 @@
                         <td class="border border-gray-300 px-4 py-3 text-sm">${item.tujuan || '-'}</td>
                         <td class="border border-gray-300 px-4 py-3 text-sm">${item.perihal || '-'}</td>
                         <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_kirim)}</td>
+                        <td class="border border-gray-300 px-4 py-3 text-center text-sm">
+                            ${item.file_name ? `
+                                <div class="flex flex-col items-center space-y-1">
+                                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded" title="${item.file_name}">
+                                        📎 ${item.file_name.length > 15 ? item.file_name.substring(0, 12) + '...' : item.file_name}
+                                    </span>
+                                    <span class="text-xs text-gray-500">${item.file_size || ''}</span>
+                                    ${item.file_data ? `<button onclick="downloadFile('${item.file_data}', '${item.file_name}', '${item.file_type}')" class="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition-colors">📥 Download</button>` : ''}
+                                </div>
+                            ` : '<span class="text-gray-400 text-xs">Tidak ada file</span>'}
+                        </td>
                         <td class="border border-gray-300 px-4 py-3 text-center">
                             <div class="flex justify-center space-x-2 items-center">
                                 ${item.syncedFromSheets ? '<span class="text-xs bg-green-100 text-green-600 px-1 py-0.5 rounded" title="Data tersinkronisasi dengan Google Sheets">🔗</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded" title="Data lokal saja">📱</span>'}
@@ -1548,7 +1767,7 @@
             document.getElementById('total-keluar').textContent = keluarCount;
         }
 
-        // Download PDF function
+        // Download PDF function with Google Sheets upload
         function downloadPDF(type) {
             try {
                 // Enhanced check for jsPDF with multiple fallbacks
@@ -1570,6 +1789,9 @@
                     showMessage(`Tidak ada data surat ${type} untuk dicetak`, 'error');
                     return;
                 }
+
+                // Show loading message
+                const loadingMessage = showLoadingMessage('Membuat dan mengirim PDF ke Google Sheets...');
 
                 // Create PDF document
                 const doc = new jsPDF({
@@ -1774,9 +1996,23 @@
                     const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
                     const filename = `Laporan_Surat_${type === 'masuk' ? 'Masuk' : 'Keluar'}_${dateStr}_${timeStr}.pdf`;
                     
+                    // Get PDF as base64 for upload to Google Sheets
+                    const pdfBase64 = doc.output('datauristring');
+                    
+                    // Save PDF locally
                     doc.save(filename);
                     
-                    showMessage(`PDF berhasil diunduh: ${filename}`, 'success');
+                    // Upload PDF to Google Sheets
+                    uploadPDFToSheets(pdfBase64, filename, type, dataToExport.length)
+                        .then(() => {
+                            hideLoadingMessage(loadingMessage);
+                            showMessage(`PDF berhasil diunduh dan dikirim ke Google Sheets: ${filename}`, 'success');
+                        })
+                        .catch((error) => {
+                            hideLoadingMessage(loadingMessage);
+                            console.error('Error uploading PDF to Google Sheets:', error);
+                            showMessage(`PDF berhasil diunduh: ${filename}. Gagal mengirim ke Google Sheets.`, 'warning');
+                        });
                 }
                 
                 // If logo loading is not supported, proceed without logo
@@ -2098,10 +2334,276 @@
             }, 2000);
         }
 
+        // Upload PDF to Google Sheets function
+        async function uploadPDFToSheets(pdfBase64, filename, type, recordCount) {
+            try {
+                console.log('Uploading PDF to Google Sheets:', filename);
+                
+                const uploadData = new URLSearchParams();
+                uploadData.append('action', 'uploadPDF');
+                uploadData.append('filename', filename);
+                uploadData.append('pdfData', pdfBase64);
+                uploadData.append('reportType', type);
+                uploadData.append('recordCount', recordCount);
+                uploadData.append('generatedDate', new Date().toLocaleString('id-ID'));
+                uploadData.append('filterStatus', currentFilter);
+                
+                // Add filter details if active
+                if (currentFilter !== 'all') {
+                    const filterStatusText = document.getElementById('filterStatusText')?.textContent || '';
+                    uploadData.append('filterDetails', filterStatusText);
+                }
+                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: uploadData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('PDF berhasil dikirim ke Google Sheets');
+                    return true;
+                } else {
+                    throw new Error(result.message || 'Gagal mengirim PDF ke Google Sheets');
+                }
+                
+            } catch (error) {
+                console.error('Error uploading PDF to Google Sheets:', error);
+                throw error;
+            }
+        }
+
+        // File download function
+        function downloadFile(base64Data, fileName, fileType) {
+            try {
+                // Convert base64 to blob
+                const byteCharacters = atob(base64Data.split(',')[1]);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: fileType });
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showMessage(`File "${fileName}" berhasil diunduh!`, 'success');
+            } catch (error) {
+                console.error('Error downloading file:', error);
+                showMessage('Gagal mengunduh file. File mungkin rusak.', 'error');
+            }
+        }
+
+        // PDF History functions
+        function showPDFHistory() {
+            document.getElementById('pdfHistoryModal').classList.remove('hidden');
+        }
+        
+        function closePDFHistoryModal() {
+            document.getElementById('pdfHistoryModal').classList.add('hidden');
+        }
+        
+        async function loadPDFHistory() {
+            const loadingMessage = showLoadingMessage('Memuat riwayat PDF dari Google Sheets...');
+            
+            try {
+                // Use POST method with proper parameters
+                const historyParams = new URLSearchParams();
+                historyParams.append('action', 'getPDFHistory');
+                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: historyParams
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    displayPDFHistory(result.data);
+                    hideLoadingMessage(loadingMessage);
+                    showMessage(`Berhasil memuat ${result.data.length} riwayat PDF`, 'success');
+                } else {
+                    // If no data or empty, show appropriate message
+                    if (result.success && (!result.data || result.data.length === 0)) {
+                        displayPDFHistory([]);
+                        hideLoadingMessage(loadingMessage);
+                        showMessage('Belum ada riwayat PDF yang tersimpan', 'info');
+                    } else {
+                        throw new Error(result.message || 'Gagal memuat riwayat PDF');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading PDF history:', error);
+                hideLoadingMessage(loadingMessage);
+                
+                // Show fallback with retry option
+                document.getElementById('pdfHistoryContent').innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="font-medium text-red-600 mb-2">Gagal memuat riwayat PDF</p>
+                        <p class="text-sm text-gray-500 mb-4">Kemungkinan penyebab:</p>
+                        <ul class="text-sm text-gray-500 text-left max-w-md mx-auto mb-4">
+                            <li>• Sheet "PDF History" belum dibuat di Google Sheets</li>
+                            <li>• Koneksi internet bermasalah</li>
+                            <li>• Google Apps Script belum mendukung fitur ini</li>
+                        </ul>
+                        <button onclick="loadPDFHistory()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            🔄 Coba Lagi
+                        </button>
+                        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
+                            <p class="text-sm text-blue-700 font-medium mb-2">💡 Cara mengatasi:</p>
+                            <ol class="text-sm text-blue-600 space-y-1">
+                                <li>1. Buka Google Sheets Anda</li>
+                                <li>2. Buat sheet baru dengan nama "PDF History"</li>
+                                <li>3. Tambahkan header: Filename, Report Type, Record Count, Generated Date, Filter Status, Filter Details, PDF Data</li>
+                                <li>4. Coba lagi memuat riwayat PDF</li>
+                            </ol>
+                        </div>
+                    </div>
+                `;
+                
+                showMessage('Gagal memuat riwayat PDF. Periksa Google Sheets dan coba lagi.', 'error');
+            }
+        }
+        
+        function displayPDFHistory(pdfHistory) {
+            const content = document.getElementById('pdfHistoryContent');
+            
+            if (!pdfHistory || pdfHistory.length === 0) {
+                content.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p class="font-medium">Belum ada PDF yang dikirim</p>
+                        <p class="text-sm text-gray-400 mt-2">PDF yang diunduh akan muncul di sini setelah dikirim ke Google Sheets</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by date (newest first)
+            pdfHistory.sort((a, b) => new Date(b.generatedDate) - new Date(a.generatedDate));
+            
+            content.innerHTML = `
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="bg-purple-500 text-white p-2 rounded-lg mr-3">📄</div>
+                        <div>
+                            <p class="text-sm text-purple-600 font-medium">Total PDF Tersimpan</p>
+                            <p class="text-2xl font-bold text-purple-700">${pdfHistory.length}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr class="bg-purple-100">
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-purple-800">No</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-purple-800">Nama File</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-purple-800">Jenis Laporan</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-purple-800">Jumlah Data</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-purple-800">Tanggal Dibuat</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-medium text-purple-800">Filter</th>
+                            <th class="border border-gray-300 px-4 py-3 text-center text-sm font-medium text-purple-800">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pdfHistory.map((pdf, index) => `
+                            <tr class="hover:bg-purple-50">
+                                <td class="border border-gray-300 px-4 py-3 text-sm">${index + 1}</td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm font-medium">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        ${pdf.filename || 'Tidak diketahui'}
+                                    </div>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm">
+                                    <span class="px-2 py-1 rounded text-xs font-medium ${pdf.reportType === 'masuk' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}">
+                                        ${pdf.reportType === 'masuk' ? '📥 Surat Masuk' : '📤 Surat Keluar'}
+                                    </span>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-center">
+                                    <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-medium">
+                                        ${pdf.recordCount || 0} data
+                                    </span>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm">
+                                    ${pdf.generatedDate ? new Date(pdf.generatedDate).toLocaleString('id-ID') : '-'}
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm">
+                                    <span class="text-xs ${pdf.filterStatus === 'all' ? 'text-gray-500' : 'text-blue-600 bg-blue-50 px-2 py-1 rounded'}">
+                                        ${pdf.filterDetails || (pdf.filterStatus === 'all' ? 'Semua data' : pdf.filterStatus)}
+                                    </span>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-center">
+                                    ${pdf.pdfData ? `
+                                        <button onclick="downloadPDFFromHistory('${pdf.pdfData}', '${pdf.filename}')" class="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition-colors">
+                                            📥 Download
+                                        </button>
+                                    ` : `
+                                        <span class="text-gray-400 text-xs">Tidak tersedia</span>
+                                    `}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        function downloadPDFFromHistory(pdfBase64, filename) {
+            try {
+                // Convert base64 to blob
+                const byteCharacters = atob(pdfBase64.split(',')[1]);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showMessage(`PDF "${filename}" berhasil diunduh dari riwayat!`, 'success');
+            } catch (error) {
+                console.error('Error downloading PDF from history:', error);
+                showMessage('Gagal mengunduh PDF dari riwayat', 'error');
+            }
+        }
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
             checkLogin();
             checkPDFLibrary();
+            setupFileUpload();
             
             // Initialize auto-sync after login check
             setTimeout(() => {
@@ -2111,5 +2613,5 @@
             }, 1000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9799b0b805b2fe14',t:'MTc1Njk0OTA5OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979a654083c2ce61',t:'MTc1Njk1NjQ5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
