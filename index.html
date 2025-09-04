@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Surat Masuk & Keluar - SDN 22 Tanah Keras</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" onload="console.log('jsPDF loaded successfully')" onerror="console.error('Failed to load jsPDF')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" onload="console.log('jsPDF AutoTable loaded successfully')" onerror="console.error('Failed to load jsPDF AutoTable')"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -1549,208 +1550,219 @@
 
         // Download PDF function
         function downloadPDF(type) {
-            const { jsPDF } = window.jsPdf;
-            const doc = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: [330, 210] // F4 landscape size
-            });
-
-            // Set font
-            doc.setFont('helvetica');
-            
-            // Add school logo
-            const logoImg = new Image();
-            logoImg.crossOrigin = 'anonymous';
-            logoImg.onload = function() {
-                // Add logo on the left side
-                doc.addImage(logoImg, 'PNG', 15, 10, 25, 25);
+            try {
+                // Check if jsPDF is loaded with multiple fallback checks
+                let jsPDF = null;
                 
-                // Continue with the rest of the PDF generation
-                generatePDFContent();
-            };
-            logoImg.onerror = function() {
-                // If logo fails to load, continue without it
-                console.log('Logo failed to load, continuing without logo');
-                generatePDFContent();
-            };
-            logoImg.src = 'https://iili.io/3b1SedN.png';
-            
-            function generatePDFContent() {
-                // Header text (adjusted position to accommodate logo)
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text('SDN 22 TANAH KERAS', 165, 18, { align: 'center' });
-                
-                doc.setFontSize(14);
-                const title = type === 'masuk' ? 'LAPORAN DATA SURAT MASUK' : 'LAPORAN DATA SURAT KELUAR';
-                doc.text(title, 165, 26, { align: 'center' });
-                
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 165, 32, { align: 'center' });
-                
-                // Add filter status to PDF
-                if (currentFilter !== 'all') {
-                    const filterStatusText = document.getElementById('filterStatusText').textContent;
-                    doc.setFontSize(9);
-                    doc.setFont('helvetica', 'italic');
-                    doc.text(filterStatusText, 165, 37, { align: 'center' });
+                if (typeof window.jsPDF !== 'undefined') {
+                    jsPDF = window.jsPDF.jsPDF || window.jsPDF;
+                } else if (typeof jsPDF !== 'undefined') {
+                    // Global jsPDF variable
+                    jsPDF = window.jsPDF || jsPDF;
+                } else {
+                    // Try to access from global scope
+                    try {
+                        jsPDF = eval('jsPDF');
+                    } catch (e) {
+                        console.error('jsPDF not found in any scope');
+                    }
                 }
-            
-                // Get data
-                const tableBody = type === 'masuk' ? 
-                    document.getElementById('data-table-masuk') : 
-                    document.getElementById('data-table-keluar');
                 
-                const rows = tableBody.querySelectorAll('tr');
-                
-                if (rows.length === 1 && rows[0].cells.length === 1) {
-                    showMessage('Tidak ada data untuk dicetak', 'error');
+                if (!jsPDF) {
+                    showMessage('Library PDF belum dimuat. Silakan refresh halaman dan coba lagi.', 'error');
+                    console.error('jsPDF library not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
                     return;
                 }
                 
-                // Define table structure
-                const tableStartX = 10;
-                const tableStartY = currentFilter !== 'all' ? 50 : 45; // Adjust for filter status
-                const tableWidth = 310;
-                const rowHeight = 8;
+                // Get filtered data for the specific type
+                const dataToExport = filteredData.filter(item => item.type === type);
                 
-                // Column widths
-                const colWidths = [15, 50, 30, 60, 80, 35]; // No, Nomor Surat, Tgl Surat, Pengirim/Tujuan, Perihal, Tgl Diterima/Kirim
-                let colX = [tableStartX];
-                for (let i = 0; i < colWidths.length - 1; i++) {
-                    colX.push(colX[i] + colWidths[i]);
+                if (dataToExport.length === 0) {
+                    showMessage(`Tidak ada data surat ${type} untuk dicetak`, 'error');
+                    return;
                 }
+
+                // Create PDF document
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
                 
-                // Draw table border
-                doc.setLineWidth(0.5);
-                doc.rect(tableStartX, tableStartY - 5, tableWidth, 5); // Header background
+                console.log('PDF document created successfully');
+
+                // Set font
+                doc.setFont('helvetica');
                 
-                // Table headers
-                doc.setFontSize(9);
+                // Header
+                doc.setFontSize(18);
                 doc.setFont('helvetica', 'bold');
+                doc.text('SDN 22 TANAH KERAS', 148, 20, { align: 'center' });
                 
-                const headers = type === 'masuk' ? 
-                    ['No', 'Nomor Surat', 'Tgl Surat', 'Pengirim', 'Perihal', 'Tgl Diterima'] :
-                    ['No', 'Nomor Surat', 'Tgl Surat', 'Tujuan', 'Perihal', 'Tgl Kirim'];
+                doc.setFontSize(16);
+                const title = type === 'masuk' ? 'LAPORAN DATA SURAT MASUK' : 'LAPORAN DATA SURAT KELUAR';
+                doc.text(title, 148, 30, { align: 'center' });
                 
-                // Draw header text and vertical lines
-                for (let i = 0; i < headers.length; i++) {
-                    doc.text(headers[i], colX[i] + 2, tableStartY - 1, { align: 'left' });
-                    if (i < headers.length - 1) {
-                        doc.line(colX[i + 1], tableStartY - 5, colX[i + 1], tableStartY); // Vertical line for header
-                    }
-                }
-                
-                // Draw header bottom line
-                doc.line(tableStartX, tableStartY, tableStartX + tableWidth, tableStartY);
-                
-                // Table data
+                doc.setFontSize(12);
                 doc.setFont('helvetica', 'normal');
-                let currentY = tableStartY;
-                let rowCount = 0;
+                doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 148, 38, { align: 'center' });
                 
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (row.cells.length > 1) { // Skip placeholder rows
-                        const cells = row.cells;
-                        
-                        // Check if we need a new page
+                // Add filter status if active
+                let startY = 50;
+                if (currentFilter !== 'all') {
+                    const filterStatusText = document.getElementById('filterStatusText')?.textContent || '';
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'italic');
+                    doc.text(filterStatusText, 148, 45, { align: 'center' });
+                    startY = 55;
+                }
+
+                // Prepare table data
+                const headers = type === 'masuk' ? 
+                    ['No', 'Nomor Surat', 'Tanggal Surat', 'Pengirim', 'Perihal', 'Tanggal Diterima'] :
+                    ['No', 'Nomor Surat', 'Tanggal Surat', 'Tujuan', 'Perihal', 'Tanggal Kirim'];
+
+                const tableData = dataToExport.map((item, index) => {
+                    if (type === 'masuk') {
+                        return [
+                            (index + 1).toString(),
+                            item.nomor_surat || '-',
+                            cleanDate(item.tanggal_surat) || '-',
+                            item.pengirim || '-',
+                            item.perihal || '-',
+                            cleanDate(item.tanggal_diterima) || '-'
+                        ];
+                    } else {
+                        return [
+                            (index + 1).toString(),
+                            item.nomor_surat || '-',
+                            cleanDate(item.tanggal_surat) || '-',
+                            item.tujuan || '-',
+                            item.perihal || '-',
+                            cleanDate(item.tanggal_kirim) || '-'
+                        ];
+                    }
+                });
+
+                // Create table using autoTable plugin
+                if (typeof doc.autoTable === 'function') {
+                    doc.autoTable({
+                        head: [headers],
+                        body: tableData,
+                        startY: startY,
+                        theme: 'grid',
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 3,
+                            overflow: 'linebreak',
+                            halign: 'left'
+                        },
+                        headStyles: {
+                            fillColor: type === 'masuk' ? [34, 197, 94] : [249, 115, 22], // Green for masuk, Orange for keluar
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            halign: 'center'
+                        },
+                        alternateRowStyles: {
+                            fillColor: [245, 245, 245]
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 15, halign: 'center' }, // No
+                            1: { cellWidth: 40 }, // Nomor Surat
+                            2: { cellWidth: 30, halign: 'center' }, // Tanggal Surat
+                            3: { cellWidth: 50 }, // Pengirim/Tujuan
+                            4: { cellWidth: 70 }, // Perihal
+                            5: { cellWidth: 30, halign: 'center' } // Tanggal Diterima/Kirim
+                        },
+                        margin: { left: 15, right: 15 },
+                        didDrawPage: function (data) {
+                            // Add page number
+                            const pageCount = doc.internal.getNumberOfPages();
+                            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+                            
+                            doc.setFontSize(8);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(`Halaman ${currentPage} dari ${pageCount}`, 148, 200, { align: 'center' });
+                        }
+                    });
+                } else {
+                    // Fallback: Create simple table manually
+                    let currentY = startY;
+                    const rowHeight = 8;
+                    const colWidths = [15, 40, 30, 50, 70, 30];
+                    let colX = [15];
+                    
+                    for (let i = 0; i < colWidths.length - 1; i++) {
+                        colX.push(colX[i] + colWidths[i]);
+                    }
+                    
+                    // Draw headers
+                    doc.setFillColor(type === 'masuk' ? 34 : 249, type === 'masuk' ? 197 : 115, type === 'masuk' ? 94 : 22);
+                    doc.rect(15, currentY, 235, rowHeight, 'F');
+                    
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(255, 255, 255);
+                    
+                    for (let i = 0; i < headers.length; i++) {
+                        doc.text(headers[i], colX[i] + 2, currentY + 5);
+                    }
+                    
+                    currentY += rowHeight;
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont('helvetica', 'normal');
+                    
+                    // Draw data rows
+                    tableData.forEach((row, index) => {
                         if (currentY > 180) {
                             doc.addPage();
-                            
-                            // Redraw header on new page
-                            doc.setFontSize(16);
-                            doc.setFont('helvetica', 'bold');
-                            doc.text('SDN 22 TANAH KERAS', 165, 18, { align: 'center' });
-                            
-                            doc.setFontSize(14);
-                            doc.text(title, 165, 26, { align: 'center' });
-                            
-                            doc.setFontSize(10);
-                            doc.setFont('helvetica', 'normal');
-                            doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')} (Lanjutan)`, 165, 32, { align: 'center' });
-                            
-                            currentY = 45;
-                            
-                            // Redraw table header
-                            doc.setLineWidth(0.5);
-                            doc.rect(tableStartX, currentY - 5, tableWidth, 5);
-                            doc.setFontSize(9);
-                            doc.setFont('helvetica', 'bold');
-                            
-                            for (let j = 0; j < headers.length; j++) {
-                                doc.text(headers[j], colX[j] + 2, currentY - 1, { align: 'left' });
-                                if (j < headers.length - 1) {
-                                    doc.line(colX[j + 1], currentY - 5, colX[j + 1], currentY);
-                                }
-                            }
-                            doc.line(tableStartX, currentY, tableStartX + tableWidth, currentY);
-                            doc.setFont('helvetica', 'normal');
+                            currentY = 20;
                         }
                         
-                        currentY += rowHeight;
-                        
-                        // Draw row background (alternating colors)
-                        if (rowCount % 2 === 1) {
-                            doc.setFillColor(245, 245, 245); // Light gray
-                            doc.rect(tableStartX, currentY - rowHeight, tableWidth, rowHeight, 'F');
+                        // Alternating row colors
+                        if (index % 2 === 1) {
+                            doc.setFillColor(245, 245, 245);
+                            doc.rect(15, currentY, 235, rowHeight, 'F');
                         }
                         
                         // Draw cell data
-                        const cellData = [
-                            cells[0].textContent.trim(),
-                            cells[1].textContent.trim().substring(0, 20),
-                            cleanDate(cells[2].textContent.trim()),
-                            cells[3].textContent.trim().substring(0, 25),
-                            cells[4].textContent.trim().substring(0, 35),
-                            cleanDate(cells[5].textContent.trim())
-                        ];
-                        
-                        for (let j = 0; j < cellData.length; j++) {
-                            doc.text(cellData[j], colX[j] + 2, currentY - 2, { align: 'left' });
+                        for (let j = 0; j < row.length; j++) {
+                            const text = row[j].length > 25 ? row[j].substring(0, 22) + '...' : row[j];
+                            doc.text(text, colX[j] + 2, currentY + 5);
                         }
                         
-                        // Draw row borders
-                        doc.setLineWidth(0.3);
-                        // Horizontal line
-                        doc.line(tableStartX, currentY, tableStartX + tableWidth, currentY);
-                        
-                        // Vertical lines
-                        for (let j = 0; j <= colWidths.length; j++) {
-                            const x = j === 0 ? tableStartX : (j === colWidths.length ? tableStartX + tableWidth : colX[j]);
-                            doc.line(x, currentY - rowHeight, x, currentY);
-                        }
-                        
-                        rowCount++;
-                    }
+                        currentY += rowHeight;
+                    });
                 }
-                
-                // Draw final table border
-                doc.setLineWidth(0.5);
-                doc.rect(tableStartX, tableStartY - 5, tableWidth, currentY - tableStartY + 5);
-                
+
                 // Add summary
-                currentY += 15;
-                doc.setFontSize(10);
+                const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 10;
+                doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
-                doc.text(`Total ${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}: ${rowCount} surat`, tableStartX, currentY);
-                
-                // Footer with copyright
+                doc.text(`Total ${type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar'}: ${dataToExport.length} surat`, 15, finalY);
+
+                // Add footer
                 const pageCount = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
                     doc.setPage(i);
                     doc.setFontSize(8);
-                    doc.text(`Halaman ${i} dari ${pageCount}`, 165, 200, { align: 'center' });
-                    doc.text('© 2024 SDN 22 Tanah Keras - Dibuat Oleh Admin SDN 22 Tanah Keras', 165, 205, { align: 'center' });
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('© 2024 SDN 22 Tanah Keras - Sistem Manajemen Surat', 148, 205, { align: 'center' });
                 }
+
+                // Generate filename and save
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const filename = `Laporan_Surat_${type === 'masuk' ? 'Masuk' : 'Keluar'}_${dateStr}_${timeStr}.pdf`;
                 
-                // Save PDF
-                const filename = `Laporan_Surat_${type === 'masuk' ? 'Masuk' : 'Keluar'}_${new Date().toISOString().split('T')[0]}.pdf`;
                 doc.save(filename);
                 
                 showMessage(`PDF berhasil diunduh: ${filename}`, 'success');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showMessage('Gagal membuat PDF. Silakan coba lagi atau refresh halaman.', 'error');
             }
         }
 
@@ -2033,9 +2045,30 @@
             }, 4000);
         }
         
+        // Check PDF library status
+        function checkPDFLibrary() {
+            setTimeout(() => {
+                const jsPDFAvailable = typeof window.jsPDF !== 'undefined';
+                const autoTableAvailable = typeof window.jsPDF?.jsPDF?.prototype?.autoTable === 'function' || 
+                                         (window.jsPDF && typeof window.jsPDF.autoTable === 'function');
+                
+                console.log('PDF Library Status:');
+                console.log('- jsPDF available:', jsPDFAvailable);
+                console.log('- AutoTable available:', autoTableAvailable);
+                console.log('- window.jsPDF:', typeof window.jsPDF);
+                
+                if (jsPDFAvailable) {
+                    console.log('✅ PDF library berhasil dimuat');
+                } else {
+                    console.error('❌ PDF library gagal dimuat');
+                }
+            }, 2000);
+        }
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
             checkLogin();
+            checkPDFLibrary();
             
             // Initialize auto-sync after login check
             setTimeout(() => {
@@ -2045,5 +2078,5 @@
             }, 1000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97997953825045c8',t:'MTc1Njk0NjgyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979991cb544e45c8',t:'MTc1Njk0NzgzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
