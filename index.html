@@ -212,7 +212,19 @@
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
-                            🔄 Sinkronisasi
+                            🔄 Sinkronisasi Penuh
+                        </button>
+                        <button onclick="toggleAutoSync()" id="autoSyncBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            🔄 Auto-Sync: OFF
+                        </button>
+                        <button onclick="restoreFromBackup()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5L12 5H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                            🔄 Pulihkan Backup
                         </button>
                         <button onclick="clearLocalStorage()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,6 +284,11 @@
                     <div id="localStorageStatus" class="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
                         <div class="text-sm text-purple-600">
                             📱 Data Lokal: Memuat...
+                        </div>
+                    </div>
+                    <div id="syncStatus" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
+                        <div class="text-sm text-blue-600">
+                            🔄 Status Sinkronisasi: Siap untuk sinkronisasi
                         </div>
                     </div>
                 </div>
@@ -533,22 +550,115 @@
         function updateLocalStorageStatus() {
             const masukCount = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_MASUK) || '[]').length;
             const keluarCount = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR) || '[]').length;
-            const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+            const lastSyncData = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+            
+            // Parse sync metadata
+            let syncInfo = null;
+            try {
+                syncInfo = lastSyncData ? JSON.parse(lastSyncData) : null;
+            } catch (error) {
+                // Handle old format (just timestamp string)
+                syncInfo = lastSyncData ? { lastSync: lastSyncData } : null;
+            }
             
             // Update status display if elements exist
             const statusElement = document.getElementById('localStorageStatus');
             if (statusElement) {
-                statusElement.innerHTML = `
+                let statusHTML = `
                     <div class="text-sm text-purple-600">
-                        📱 Data Lokal: ${masukCount} surat masuk, ${keluarCount} surat keluar
-                        ${lastSync ? `<br>🔄 Sinkronisasi terakhir: ${new Date(lastSync).toLocaleString('id-ID')}` : ''}
+                        📱 <strong>Data Lokal Tersimpan:</strong> ${masukCount} surat masuk, ${keluarCount} surat keluar
+                `;
+                
+                if (syncInfo) {
+                    const lastSyncDate = new Date(syncInfo.lastSync).toLocaleString('id-ID');
+                    statusHTML += `<br>🔄 <strong>Sinkronisasi terakhir:</strong> ${lastSyncDate}`;
+                    
+                    if (syncInfo.changes !== undefined) {
+                        statusHTML += `<br>📊 <strong>Perubahan terakhir:</strong> ${syncInfo.changes} item (${syncInfo.newFromSheets || 0} baru, ${syncInfo.updatedFromSheets || 0} diperbarui)`;
+                    }
+                    
+                    // Show sync source indicators
+                    const masukData = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_MASUK) || '[]');
+                    const keluarData = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR) || '[]');
+                    
+                    const syncedFromSheetsCount = [...masukData, ...keluarData].filter(item => item.syncedFromSheets).length;
+                    const localOnlyCount = [...masukData, ...keluarData].filter(item => !item.syncedFromSheets).length;
+                    
+                    if (syncedFromSheetsCount > 0 || localOnlyCount > 0) {
+                        statusHTML += `<br>🔗 <strong>Sumber data:</strong> ${syncedFromSheetsCount} dari Google Sheets, ${localOnlyCount} lokal saja`;
+                    }
+                } else {
+                    statusHTML += `<br>⚠️ <em>Belum pernah sinkronisasi dengan Google Sheets</em>`;
+                }
+                
+                statusHTML += `
                     </div>
                 `;
+                
+                statusElement.innerHTML = statusHTML;
+            }
+            
+            // Update sync status
+            updateSyncStatus();
+        }
+        
+        function updateSyncStatus(message = null, type = 'info') {
+            const syncStatusElement = document.getElementById('syncStatus');
+            if (syncStatusElement) {
+                if (message) {
+                    let bgColor = 'bg-blue-50 border-blue-200';
+                    let textColor = 'text-blue-600';
+                    
+                    if (type === 'success') {
+                        bgColor = 'bg-green-50 border-green-200';
+                        textColor = 'text-green-600';
+                    } else if (type === 'error') {
+                        bgColor = 'bg-red-50 border-red-200';
+                        textColor = 'text-red-600';
+                    } else if (type === 'warning') {
+                        bgColor = 'bg-yellow-50 border-yellow-200';
+                        textColor = 'text-yellow-600';
+                    }
+                    
+                    syncStatusElement.className = `mt-2 p-3 ${bgColor} border rounded-lg`;
+                    syncStatusElement.innerHTML = `
+                        <div class="text-sm ${textColor}">
+                            🔄 ${message}
+                        </div>
+                    `;
+                    syncStatusElement.classList.remove('hidden');
+                    
+                    // Auto-hide after 5 seconds for non-error messages
+                    if (type !== 'error') {
+                        setTimeout(() => {
+                            syncStatusElement.classList.add('hidden');
+                        }, 5000);
+                    }
+                } else {
+                    const autoSyncStatus = isAutoSyncEnabled ? 'Auto-sync aktif (setiap 30 detik)' : 'Auto-sync tidak aktif';
+                    syncStatusElement.className = 'mt-2 p-3 bg-blue-50 border-blue-200 border rounded-lg';
+                    syncStatusElement.innerHTML = `
+                        <div class="text-sm text-blue-600">
+                            🔄 Status Sinkronisasi: ${autoSyncStatus}
+                        </div>
+                    `;
+                    syncStatusElement.classList.remove('hidden');
+                }
             }
         }
         
         function clearLocalStorage() {
             if (confirm('Apakah Anda yakin ingin menghapus semua data lokal? Data ini tidak dapat dikembalikan!')) {
+                // Create final backup before clearing
+                const masukData = localStorage.getItem(STORAGE_KEYS.SURAT_MASUK);
+                const keluarData = localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR);
+                const syncData = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+                
+                if (masukData) localStorage.setItem(STORAGE_KEYS.SURAT_MASUK + '_final_backup', masukData);
+                if (keluarData) localStorage.setItem(STORAGE_KEYS.SURAT_KELUAR + '_final_backup', keluarData);
+                if (syncData) localStorage.setItem(STORAGE_KEYS.LAST_SYNC + '_final_backup', syncData);
+                
+                // Clear main data
                 localStorage.removeItem(STORAGE_KEYS.SURAT_MASUK);
                 localStorage.removeItem(STORAGE_KEYS.SURAT_KELUAR);
                 localStorage.removeItem(STORAGE_KEYS.LAST_SYNC);
@@ -559,7 +669,52 @@
                 updateStats(filteredData);
                 updateLocalStorageStatus();
                 
-                showMessage('Semua data lokal berhasil dihapus', 'success');
+                showMessage('Semua data lokal berhasil dihapus. Backup final tersimpan untuk pemulihan darurat.', 'success');
+            }
+        }
+        
+        function restoreFromBackup() {
+            const backupMasuk = localStorage.getItem(STORAGE_KEYS.SURAT_MASUK + '_backup');
+            const backupKeluar = localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR + '_backup');
+            const finalBackupMasuk = localStorage.getItem(STORAGE_KEYS.SURAT_MASUK + '_final_backup');
+            const finalBackupKeluar = localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR + '_final_backup');
+            
+            let hasBackup = false;
+            let backupType = '';
+            
+            if (backupMasuk || backupKeluar) {
+                hasBackup = true;
+                backupType = 'backup sinkronisasi terakhir';
+            } else if (finalBackupMasuk || finalBackupKeluar) {
+                hasBackup = true;
+                backupType = 'backup final (sebelum penghapusan)';
+            }
+            
+            if (!hasBackup) {
+                showMessage('Tidak ada backup yang tersedia untuk dipulihkan', 'error');
+                return;
+            }
+            
+            if (confirm(`Apakah Anda yakin ingin memulihkan data dari ${backupType}? Data saat ini akan ditimpa.`)) {
+                try {
+                    // Restore from available backup
+                    if (backupMasuk || backupKeluar) {
+                        if (backupMasuk) localStorage.setItem(STORAGE_KEYS.SURAT_MASUK, backupMasuk);
+                        if (backupKeluar) localStorage.setItem(STORAGE_KEYS.SURAT_KELUAR, backupKeluar);
+                    } else {
+                        if (finalBackupMasuk) localStorage.setItem(STORAGE_KEYS.SURAT_MASUK, finalBackupMasuk);
+                        if (finalBackupKeluar) localStorage.setItem(STORAGE_KEYS.SURAT_KELUAR, finalBackupKeluar);
+                    }
+                    
+                    // Reload data
+                    loadFromLocalStorage();
+                    
+                    showMessage(`Data berhasil dipulihkan dari ${backupType}!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error restoring backup:', error);
+                    showMessage('Gagal memulihkan data dari backup', 'error');
+                }
             }
         }
         
@@ -863,25 +1018,295 @@
             await submitForm(formData, 'keluar');
         });
 
-        // Load data
+        // Load data with bidirectional sync detection
         async function loadData() {
+            const loadingMessage = showLoadingMessage('Sinkronisasi dengan Google Sheets...');
+            
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getData`);
+                const response = await fetch(`${SCRIPT_URL}?action=getData&separateSheets=true`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    allData = data.data;
+                    // Get current local data
+                    const localMasuk = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_MASUK) || '[]');
+                    const localKeluar = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR) || '[]');
+                    
+                    // Separate Google Sheets data
+                    const sheetsMasuk = data.data.filter(item => item.type === 'masuk');
+                    const sheetsKeluar = data.data.filter(item => item.type === 'keluar');
+                    
+                    // Detect changes and sync
+                    const syncResult = await performBidirectionalSync(
+                        { masuk: localMasuk, keluar: localKeluar },
+                        { masuk: sheetsMasuk, keluar: sheetsKeluar }
+                    );
+                    
+                    // Update display with synced data
+                    allData = [...syncResult.masuk, ...syncResult.keluar];
                     filteredData = [...allData];
                     displayData(filteredData);
                     updateStats(filteredData);
                     updateFilterStatus('Menampilkan semua data');
+                    
+                    // Update last sync time
+                    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+                    updateLocalStorageStatus();
+                    
+                    hideLoadingMessage(loadingMessage);
+                    showMessage(`Sinkronisasi berhasil! Total: ${allData.length} data`, 'success');
+                    
                 } else {
                     throw new Error(data.message || 'Gagal memuat data');
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
-                showMessage('Gagal memuat data dari Google Sheets. Menggunakan data lokal.', 'error');
+                hideLoadingMessage(loadingMessage);
+                showMessage('Gagal sinkronisasi dengan Google Sheets. Menggunakan data lokal.', 'error');
                 loadFromLocalStorage();
+            }
+        }
+        
+        // Enhanced bidirectional sync function with persistent storage
+        async function performBidirectionalSync(localData, sheetsData) {
+            const syncedData = { masuk: [], keluar: [] };
+            let totalChanges = 0;
+            let newFromSheets = 0;
+            let updatedFromSheets = 0;
+            
+            // Sync each type
+            for (const type of ['masuk', 'keluar']) {
+                const local = localData[type] || [];
+                const sheets = sheetsData[type] || [];
+                
+                console.log(`Syncing ${type}: Local=${local.length}, Sheets=${sheets.length}`);
+                
+                // Create a map for easier comparison using multiple fields
+                const localMap = new Map();
+                local.forEach((item, index) => {
+                    // Create unique key using multiple fields for better matching
+                    const key = `${item.nomor_surat || ''}_${item.tanggal_surat || ''}_${(item.perihal || '').substring(0, 20)}`;
+                    localMap.set(key, { 
+                        ...item, 
+                        localIndex: index,
+                        id: item.id || Date.now() + Math.random(),
+                        timestamp: item.timestamp || new Date().toISOString(),
+                        type: type
+                    });
+                });
+                
+                const sheetsMap = new Map();
+                sheets.forEach((item, index) => {
+                    const key = `${item.nomor_surat || ''}_${item.tanggal_surat || ''}_${(item.perihal || '').substring(0, 20)}`;
+                    sheetsMap.set(key, { 
+                        ...item, 
+                        sheetsIndex: index,
+                        id: item.id || Date.now() + Math.random(),
+                        timestamp: item.timestamp || new Date().toISOString(),
+                        type: type,
+                        syncedFromSheets: true // Mark as synced from sheets
+                    });
+                });
+                
+                // Merge data with sheets as authoritative source
+                const mergedItems = [];
+                
+                // Process sheets data first (authoritative source)
+                for (const [key, sheetsItem] of sheetsMap) {
+                    if (localMap.has(key)) {
+                        // Item exists in both - compare and use sheets version if different
+                        const localItem = localMap.get(key);
+                        
+                        // Compare key fields to detect changes
+                        const sheetsSignature = JSON.stringify({
+                            nomor_surat: sheetsItem.nomor_surat,
+                            tanggal_surat: sheetsItem.tanggal_surat,
+                            perihal: sheetsItem.perihal,
+                            pengirim: sheetsItem.pengirim,
+                            tujuan: sheetsItem.tujuan,
+                            tanggal_diterima: sheetsItem.tanggal_diterima,
+                            tanggal_kirim: sheetsItem.tanggal_kirim
+                        });
+                        
+                        const localSignature = JSON.stringify({
+                            nomor_surat: localItem.nomor_surat,
+                            tanggal_surat: localItem.tanggal_surat,
+                            perihal: localItem.perihal,
+                            pengirim: localItem.pengirim,
+                            tujuan: localItem.tujuan,
+                            tanggal_diterima: localItem.tanggal_diterima,
+                            tanggal_kirim: localItem.tanggal_kirim
+                        });
+                        
+                        if (sheetsSignature !== localSignature) {
+                            console.log(`Updated from sheets: ${key}`);
+                            updatedFromSheets++;
+                            totalChanges++;
+                        }
+                        
+                        // Use sheets version but preserve local metadata
+                        mergedItems.push({
+                            ...sheetsItem,
+                            id: localItem.id, // Keep original local ID
+                            timestamp: sheetsItem.timestamp || localItem.timestamp,
+                            type: type,
+                            syncedFromSheets: true,
+                            lastSyncTime: new Date().toISOString()
+                        });
+                        
+                        localMap.delete(key); // Mark as processed
+                    } else {
+                        // Item exists only in sheets - new data from sheets
+                        console.log(`New from sheets: ${key}`);
+                        newFromSheets++;
+                        totalChanges++;
+                        mergedItems.push({
+                            ...sheetsItem,
+                            id: sheetsItem.id || Date.now() + Math.random(),
+                            timestamp: sheetsItem.timestamp || new Date().toISOString(),
+                            type: type,
+                            syncedFromSheets: true,
+                            lastSyncTime: new Date().toISOString()
+                        });
+                    }
+                }
+                
+                // Process remaining local items (items that don't exist in sheets)
+                for (const [key, localItem] of localMap) {
+                    console.log(`Local-only item preserved: ${key}`);
+                    mergedItems.push({
+                        ...localItem,
+                        type: type,
+                        syncedFromSheets: false // Mark as local-only
+                    });
+                }
+                
+                // Sort by timestamp (newest first)
+                mergedItems.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                syncedData[type] = mergedItems;
+                console.log(`${type} sync complete: ${mergedItems.length} total items`);
+            }
+            
+            // Save synced data to localStorage with backup
+            try {
+                // Create backup of current data before overwriting
+                const currentMasuk = localStorage.getItem(STORAGE_KEYS.SURAT_MASUK);
+                const currentKeluar = localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR);
+                
+                if (currentMasuk) {
+                    localStorage.setItem(STORAGE_KEYS.SURAT_MASUK + '_backup', currentMasuk);
+                }
+                if (currentKeluar) {
+                    localStorage.setItem(STORAGE_KEYS.SURAT_KELUAR + '_backup', currentKeluar);
+                }
+                
+                // Save new synced data
+                localStorage.setItem(STORAGE_KEYS.SURAT_MASUK, JSON.stringify(syncedData.masuk));
+                localStorage.setItem(STORAGE_KEYS.SURAT_KELUAR, JSON.stringify(syncedData.keluar));
+                
+                // Update sync metadata
+                const syncMetadata = {
+                    lastSync: new Date().toISOString(),
+                    totalItems: syncedData.masuk.length + syncedData.keluar.length,
+                    changes: totalChanges,
+                    newFromSheets: newFromSheets,
+                    updatedFromSheets: updatedFromSheets,
+                    masukCount: syncedData.masuk.length,
+                    keluarCount: syncedData.keluar.length
+                };
+                
+                localStorage.setItem(STORAGE_KEYS.LAST_SYNC, JSON.stringify(syncMetadata));
+                
+                console.log('Sync completed and saved to localStorage:', syncMetadata);
+                
+                // Update sync status with detailed info
+                updateSyncStatus(
+                    `Sinkronisasi berhasil! ${totalChanges} perubahan (${newFromSheets} baru, ${updatedFromSheets} diperbarui)`,
+                    'success'
+                );
+                
+            } catch (error) {
+                console.error('Error saving synced data to localStorage:', error);
+                
+                // Restore from backup if save failed
+                const backupMasuk = localStorage.getItem(STORAGE_KEYS.SURAT_MASUK + '_backup');
+                const backupKeluar = localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR + '_backup');
+                
+                if (backupMasuk) localStorage.setItem(STORAGE_KEYS.SURAT_MASUK, backupMasuk);
+                if (backupKeluar) localStorage.setItem(STORAGE_KEYS.SURAT_KELUAR, backupKeluar);
+                
+                throw new Error('Gagal menyimpan data sinkronisasi ke penyimpanan lokal');
+            }
+            
+            return syncedData;
+        }
+        
+        // Enhanced auto-sync function with persistent storage
+        async function autoSync() {
+            try {
+                console.log('Running auto-sync...');
+                
+                // Show subtle sync indicator
+                updateSyncStatus('Auto-sync sedang berjalan...', 'info');
+                
+                const response = await fetch(`${SCRIPT_URL}?action=getData&separateSheets=true`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Get current local data
+                    const localMasuk = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_MASUK) || '[]');
+                    const localKeluar = JSON.parse(localStorage.getItem(STORAGE_KEYS.SURAT_KELUAR) || '[]');
+                    
+                    // Separate Google Sheets data
+                    const sheetsMasuk = data.data.filter(item => item.type === 'masuk');
+                    const sheetsKeluar = data.data.filter(item => item.type === 'keluar');
+                    
+                    // Perform sync and save to localStorage
+                    const syncResult = await performBidirectionalSync(
+                        { masuk: localMasuk, keluar: localKeluar },
+                        { masuk: sheetsMasuk, keluar: sheetsKeluar }
+                    );
+                    
+                    // Update display with synced data (only if user is viewing data tab)
+                    const currentTab = document.querySelector('[id^="tab-"][class*="text-blue-600"]');
+                    if (currentTab && currentTab.id === 'tab-data') {
+                        allData = [...syncResult.masuk, ...syncResult.keluar];
+                        filteredData = [...allData];
+                        displayData(filteredData);
+                        updateStats(filteredData);
+                    }
+                    
+                    updateLocalStorageStatus();
+                    
+                    console.log('Auto-sync completed successfully');
+                    
+                } else {
+                    console.log('Auto-sync failed: Invalid response from server');
+                    updateSyncStatus('Auto-sync gagal: Respons server tidak valid', 'warning');
+                }
+                
+            } catch (error) {
+                console.log('Auto-sync failed:', error);
+                updateSyncStatus('Auto-sync gagal: Koneksi bermasalah', 'warning');
+            }
+        }
+        
+        // Loading message functions
+        function showLoadingMessage(text) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'syncLoading';
+            loadingDiv.className = 'fixed top-4 left-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50 flex items-center';
+            loadingDiv.innerHTML = `
+                <div class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
+                <span>${text}</span>
+            `;
+            document.body.appendChild(loadingDiv);
+            return loadingDiv;
+        }
+        
+        function hideLoadingMessage(loadingDiv) {
+            if (loadingDiv && loadingDiv.parentNode) {
+                loadingDiv.parentNode.removeChild(loadingDiv);
             }
         }
 
@@ -1064,7 +1489,8 @@
                         <td class="border border-gray-300 px-4 py-3 text-sm">${item.perihal || '-'}</td>
                         <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_diterima)}</td>
                         <td class="border border-gray-300 px-4 py-3 text-center">
-                            <div class="flex justify-center space-x-2">
+                            <div class="flex justify-center space-x-2 items-center">
+                                ${item.syncedFromSheets ? '<span class="text-xs bg-green-100 text-green-600 px-1 py-0.5 rounded" title="Data tersinkronisasi dengan Google Sheets">🔗</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded" title="Data lokal saja">📱</span>'}
                                 <button onclick="editData(${index + 1}, 'masuk')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors">
                                     ✏️ Edit
                                 </button>
@@ -1097,7 +1523,8 @@
                         <td class="border border-gray-300 px-4 py-3 text-sm">${item.perihal || '-'}</td>
                         <td class="border border-gray-300 px-4 py-3 text-sm">${cleanDate(item.tanggal_kirim)}</td>
                         <td class="border border-gray-300 px-4 py-3 text-center">
-                            <div class="flex justify-center space-x-2">
+                            <div class="flex justify-center space-x-2 items-center">
+                                ${item.syncedFromSheets ? '<span class="text-xs bg-green-100 text-green-600 px-1 py-0.5 rounded" title="Data tersinkronisasi dengan Google Sheets">🔗</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded" title="Data lokal saja">📱</span>'}
                                 <button onclick="editData(${index + 1}, 'keluar')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors">
                                     ✏️ Edit
                                 </button>
@@ -1386,45 +1813,68 @@
             document.getElementById('editForm').reset();
         }
 
-        // Delete function
+        // Delete function with bidirectional sync
         async function deleteData(id, type) {
             if (confirm(`Apakah Anda yakin ingin menghapus surat ${type} nomor ${id} ini?`)) {
-                // Delete from localStorage first
-                const localDeleted = deleteFromLocalStorage(id, type);
+                const loadingMessage = showLoadingMessage('Menghapus data...');
                 
-                if (localDeleted) {
-                    showMessage(`Surat ${type} nomor ${id} berhasil dihapus dari penyimpanan lokal!`, 'success');
-                    updateLocalStorageStatus();
-                } else {
-                    showMessage(`Gagal menghapus surat ${type} dari penyimpanan lokal.`, 'error');
-                }
-                
-                // Try to delete from Google Sheets (optional)
                 try {
+                    // Delete from Google Sheets first
                     const deleteParams = new URLSearchParams();
                     deleteParams.append('action', 'deleteData');
                     deleteParams.append('type', type);
                     deleteParams.append('rowNumber', id);
                     deleteParams.append('sheetName', type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar');
                     
-                    await fetch(SCRIPT_URL, {
+                    const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
                         body: deleteParams
                     });
                     
-                    console.log('Data juga dihapus dari Google Sheets');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // If Google Sheets deletion successful, delete from localStorage
+                        const localDeleted = deleteFromLocalStorage(id, type);
+                        
+                        if (localDeleted) {
+                            hideLoadingMessage(loadingMessage);
+                            showMessage(`Surat ${type} nomor ${id} berhasil dihapus dari sistem dan Google Sheets!`, 'success');
+                            updateLocalStorageStatus();
+                            
+                            // Update last sync time
+                            localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+                            updateLocalStorageStatus();
+                        } else {
+                            hideLoadingMessage(loadingMessage);
+                            showMessage('Data dihapus dari Google Sheets tapi gagal dihapus dari penyimpanan lokal.', 'warning');
+                        }
+                    } else {
+                        throw new Error(result.message || 'Gagal menghapus dari Google Sheets');
+                    }
                     
                 } catch (error) {
-                    console.log('Gagal menghapus dari Google Sheets, tapi data lokal sudah dihapus:', error);
+                    console.error('Error deleting from Google Sheets:', error);
+                    
+                    // If Google Sheets deletion fails, still delete from localStorage
+                    const localDeleted = deleteFromLocalStorage(id, type);
+                    
+                    hideLoadingMessage(loadingMessage);
+                    
+                    if (localDeleted) {
+                        showMessage(`Surat ${type} nomor ${id} dihapus dari penyimpanan lokal. Sinkronisasi dengan Google Sheets gagal.`, 'warning');
+                        updateLocalStorageStatus();
+                    } else {
+                        showMessage(`Gagal menghapus surat ${type}. Silakan coba lagi.`, 'error');
+                    }
                 }
             }
         }
 
-        // Edit form submission
+        // Edit form submission with bidirectional sync
         document.getElementById('editForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1450,42 +1900,61 @@
                     updateData.tanggal_kirim = formData.get('tanggal_aksi') || '';
                 }
                 
-                // Update localStorage first
-                const localUpdated = updateLocalStorage(id, type, updateData);
-                
-                if (localUpdated) {
-                    showMessage(`Data surat ${type} berhasil diperbarui di penyimpanan lokal!`, 'success');
-                    closeEditModal();
-                    updateLocalStorageStatus();
-                } else {
-                    showMessage('Gagal memperbarui data di penyimpanan lokal.', 'error');
-                }
-                
-                // Try to update Google Sheets (optional)
+                // Update Google Sheets first
                 try {
                     const sheetsData = new URLSearchParams();
                     sheetsData.append('action', 'updateData');
                     sheetsData.append('type', type);
-                    sheetsData.append('id', id);
+                    sheetsData.append('rowNumber', id);
                     sheetsData.append('separateSheets', 'true');
+                    sheetsData.append('sheetName', type === 'masuk' ? 'Surat Masuk' : 'Surat Keluar');
                     
                     for (let [key, value] of Object.entries(updateData)) {
                         sheetsData.append(key, value);
                     }
                     
-                    await fetch(SCRIPT_URL, {
+                    const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
                         body: sheetsData
                     });
                     
-                    console.log('Data juga diperbarui di Google Sheets');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // If Google Sheets update successful, update localStorage
+                        const localUpdated = updateLocalStorage(id, type, updateData);
+                        
+                        if (localUpdated) {
+                            showMessage(`Data surat ${type} berhasil diperbarui di sistem dan Google Sheets!`, 'success');
+                            closeEditModal();
+                            
+                            // Update last sync time
+                            localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+                            updateLocalStorageStatus();
+                        } else {
+                            showMessage('Data diperbarui di Google Sheets tapi gagal diperbarui di penyimpanan lokal.', 'warning');
+                            closeEditModal();
+                        }
+                    } else {
+                        throw new Error(result.message || 'Gagal memperbarui Google Sheets');
+                    }
                     
                 } catch (error) {
-                    console.log('Gagal memperbarui Google Sheets, tapi data lokal sudah diperbarui:', error);
+                    console.error('Error updating Google Sheets:', error);
+                    
+                    // If Google Sheets update fails, still update localStorage
+                    const localUpdated = updateLocalStorage(id, type, updateData);
+                    
+                    if (localUpdated) {
+                        showMessage(`Data surat ${type} diperbarui di penyimpanan lokal. Sinkronisasi dengan Google Sheets gagal.`, 'warning');
+                        closeEditModal();
+                        updateLocalStorageStatus();
+                    } else {
+                        showMessage('Gagal memperbarui data di penyimpanan lokal.', 'error');
+                    }
                 }
                 
             } catch (error) {
@@ -1496,10 +1965,85 @@
             }
         });
 
+        // Auto-sync management
+        let autoSyncInterval = null;
+        let isAutoSyncEnabled = false;
+        
+        function toggleAutoSync() {
+            const btn = document.getElementById('autoSyncBtn');
+            
+            if (isAutoSyncEnabled) {
+                // Disable auto-sync
+                if (autoSyncInterval) {
+                    clearInterval(autoSyncInterval);
+                    autoSyncInterval = null;
+                }
+                isAutoSyncEnabled = false;
+                btn.innerHTML = `
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    🔄 Auto-Sync: OFF
+                `;
+                btn.className = "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center text-sm";
+                showMessage('Auto-sync dinonaktifkan', 'info');
+                localStorage.setItem('autoSyncEnabled', 'false');
+            } else {
+                // Enable auto-sync
+                isAutoSyncEnabled = true;
+                autoSyncInterval = setInterval(autoSync, 30000); // Sync every 30 seconds
+                btn.innerHTML = `
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    🔄 Auto-Sync: ON
+                `;
+                btn.className = "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm";
+                showMessage('Auto-sync diaktifkan (setiap 30 detik)', 'success');
+                localStorage.setItem('autoSyncEnabled', 'true');
+                
+                // Run initial sync
+                setTimeout(autoSync, 2000);
+            }
+        }
+        
+        // Initialize auto-sync state
+        function initializeAutoSync() {
+            const savedState = localStorage.getItem('autoSyncEnabled');
+            if (savedState === 'true') {
+                toggleAutoSync(); // This will enable auto-sync
+            }
+        }
+        
+        // Enhanced show message with warning type
+        function showMessage(text, type = 'success') {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            
+            let bgColor = 'bg-green-500';
+            if (type === 'error') bgColor = 'bg-red-500';
+            else if (type === 'warning') bgColor = 'bg-yellow-500';
+            else if (type === 'info') bgColor = 'bg-blue-500';
+            
+            message.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${bgColor} text-white`;
+            message.classList.remove('hidden');
+            
+            setTimeout(() => {
+                message.classList.add('hidden');
+            }, 4000);
+        }
+        
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
             checkLogin();
+            
+            // Initialize auto-sync after login check
+            setTimeout(() => {
+                if (document.getElementById('mainApp') && !document.getElementById('mainApp').classList.contains('hidden')) {
+                    initializeAutoSync();
+                }
+            }, 1000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979542e3037e5fd9',t:'MTc1NjkwMjY1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97997953825045c8',t:'MTc1Njk0NjgyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
