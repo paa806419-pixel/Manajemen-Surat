@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Surat Masuk & Keluar - SDN 22 Tanah Keras</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/jspdf-autotable@latest/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -1551,13 +1551,17 @@
         // Download PDF function
         function downloadPDF(type) {
             try {
-                // Simple check for jsPDF
-                if (typeof window.jsPDF === 'undefined') {
+                // Enhanced check for jsPDF with multiple fallbacks
+                let jsPDF;
+                
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    jsPDF = window.jspdf.jsPDF;
+                } else if (window.jsPDF) {
+                    jsPDF = window.jsPDF;
+                } else {
                     showMessage('Library PDF belum dimuat. Silakan refresh halaman dan coba lagi.', 'error');
                     return;
                 }
-                
-                const { jsPDF } = window.jsPDF;
                 
                 // Get filtered data for the specific type
                 const dataToExport = filteredData.filter(item => item.type === type);
@@ -1568,7 +1572,11 @@
                 }
 
                 // Create PDF document
-                const doc = new jsPDF('landscape', 'mm', 'a4');
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
                 
                 console.log('PDF document created successfully');
 
@@ -2029,14 +2037,29 @@
         // Check PDF library status
         function checkPDFLibrary() {
             setTimeout(() => {
-                if (typeof window.jsPDF !== 'undefined') {
+                let pdfAvailable = false;
+                let libraryInfo = '';
+                
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    pdfAvailable = true;
+                    libraryInfo = 'jsPDF tersedia di window.jspdf.jsPDF';
+                } else if (window.jsPDF) {
+                    pdfAvailable = true;
+                    libraryInfo = 'jsPDF tersedia di window.jsPDF';
+                } else {
+                    libraryInfo = 'jsPDF tidak ditemukan di window object';
+                }
+                
+                console.log('PDF Library Check:', libraryInfo);
+                
+                if (pdfAvailable) {
                     console.log('✅ PDF library berhasil dimuat');
                     showMessage('Library PDF siap digunakan!', 'success');
                 } else {
                     console.error('❌ PDF library gagal dimuat');
-                    showMessage('Library PDF gagal dimuat. Coba refresh halaman.', 'error');
+                    showMessage('Library PDF gagal dimuat. Coba refresh halaman atau gunakan browser lain.', 'error');
                 }
-            }, 3000);
+            }, 2000);
         }
 
         // Initialize app
@@ -2052,5 +2075,5 @@
             }, 1000);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97999af2928b8333',t:'MTc1Njk0ODIwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9799a428115ffd8d',t:'MTc1Njk0ODU4NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
